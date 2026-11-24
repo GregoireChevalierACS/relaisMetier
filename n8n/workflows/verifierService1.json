@@ -1,0 +1,68 @@
+{
+  "id": "verifierService1",
+  "name": "Vérifier le service",
+  "description": null,
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "id": "6f1c2c1e-3a51-4d0b-9c0a-1d2f3e4a5b61",
+      "name": "Lancement manuel",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "6f1c2c1e-3a51-4d0b-9c0a-1d2f3e4a5b62",
+      "name": "GET /sante",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "url": "http://service:3000/sante",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "serviceRelais001",
+          "name": "Service relaisMetier"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Lancement manuel": {
+      "main": [
+        [
+          {
+            "node": "GET /sante",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": null,
+  "nodeGroups": [],
+  "pinData": {},
+  "sourceWorkflowId": null,
+  "tags": [],
+  "versionMetadata": {
+    "name": null,
+    "description": null
+  }
+}

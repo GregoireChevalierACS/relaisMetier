@@ -1,0 +1,6 @@
+[submodule "vendor/mailHelper"]
+	path = vendor/mailHelper
+	url = https://github.com/GregoireChevalierACS/mailHelper
+[submodule "vendor/FindAndFill"]
+	path = vendor/FindAndFill
+	url = https://github.com/GregoireChevalierACS/FindAndFill

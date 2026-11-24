@@ -1,0 +1,16 @@
+**/node_modules
+**/dist
+**/coverage
+**/reports
+**/.stryker-tmp
+.git
+**/.git
+.husky
+.github
+.env
+.env.*
+n8n
+docker
+docs
+# Applications de bureau des sous-modules : jamais construites ici.
+vendor/*/apps

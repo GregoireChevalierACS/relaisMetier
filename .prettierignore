@@ -1,0 +1,8 @@
+pnpm-lock.yaml
+vendor/
+dist/
+coverage/
+reports/
+.stryker-tmp/
+# Écrits par la CLI n8n (export --pretty) : on garde son format pour que les diffs restent stables.
+n8n/workflows/

@@ -1,0 +1,15 @@
+packages:
+  - packages/*
+  - apps/*
+  # Sous-modules (ADR 0002) : seuls les paquets réutilisables, jamais les applications de bureau.
+  - vendor/mailHelper/packages/*
+  - vendor/FindAndFill/packages/*
+
+# Quarantaine : une version publiée depuis moins de 3 jours n'est pas installée. La plupart des
+# paquets compromis sont détectés et retirés du registre dans ce délai.
+minimumReleaseAge: 4320
+
+# Seul esbuild (utilisé par tsdown et Vitest) a le droit d'exécuter un script d'installation.
+# Tout autre script est bloqué.
+onlyBuiltDependencies:
+  - esbuild
