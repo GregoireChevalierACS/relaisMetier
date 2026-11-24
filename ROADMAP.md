@@ -72,7 +72,7 @@ relaisMetier/
 - [x] Authentification entre n8n et le service par secret partagé, avec un service joignable seulement sur le réseau Docker interne.
 - [x] ADR 0001 (n8n orchestre, le service décide), ADR 0002 (réutilisation par sous-modules), ADR 0003 (versions de l'outillage).
 
-État au 2026-11-24 : critère rempli en local (pile démarrée, workflow importé dans un n8n neuf, `GET /sante` → 200 ; lint, architecture, types, couverture à 100 %, build, mutation). **Reste à voir la CI passer sur GitHub**, une fois le dépôt publié.
+**Terminée le 2026-11-24** (PR #1) : pile démarrée, workflow importé dans un n8n neuf, `GET /sante` → 200, CI verte sur GitHub (vérification, smoke test, CodeQL, GitGuardian).
 
 Défauts connus, non corrigés :
 
@@ -83,12 +83,33 @@ Défauts connus, non corrigés :
 
 **Terminée quand** : `pnpm generer:jeu --graine 42` produit, deux fois de suite, exactement les mêmes fichiers, et les attendus de chaque fichier (catégorie du courriel, champs du devis) sont générés avec lui.
 
-- [ ] Courriels fictifs, au format `.eml` : demandes de clients, questions récurrentes, réponses de fournisseurs (confirmation, rupture, délai), robots, lettres d'information, et quelques tentatives d'injection de consignes.
-- [ ] Devis PDF fictifs générés depuis un gabarit fixe (client, matériel, aides, montant), plus une **variante de mise en page** pour tester la détection d'un changement de format.
-- [ ] Exports Excel fictifs : devis signés, contrats d'entretien.
-- [ ] Chargement du jeu dans les boîtes GreenMail par une commande.
+- [x] Courriels fictifs, au format `.eml` : demandes de clients, questions récurrentes, réponses de fournisseurs (confirmation, rupture, délai), robots, lettres d'information, et quelques tentatives d'injection de consignes.
+- [x] Devis PDF fictifs générés depuis un gabarit fixe (client, matériel, aides, montant), plus une **variante de mise en page** pour tester la détection d'un changement de format.
+- [x] Exports Excel fictifs : devis signés, contrats d'entretien.
+- [x] Chargement du jeu dans les boîtes GreenMail par une commande.
 
-Inspiré de `packages/jeu-synthetique` de FindAndFill.
+Inspiré de `packages/jeu-synthetique` de FindAndFill (aléa mulberry32, archives Excel aux octets figés, manifeste avec empreintes).
+
+Ce que contient le jeu ([packages/jeu-synthetique](packages/jeu-synthetique/src/)), quelle que soit la graine :
+
+| Fichiers                                                               | Contenu                                                                                                                                                                                                                               | Attendus dans `attendus.json`                                                                                                                                         |
+| ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 50 courriels `.eml` dans 3 boîtes (`devis@`, `accueil@`, `commandes@`) | 12 demandes de devis (dont 2 avec `Reply-To`), 10 questions récurrentes, 4 reports de rendez-vous, 10 réponses de fournisseurs (4 confirmations, 3 ruptures, 3 reports), 5 robots, 5 lettres d'information, 4 injections de consignes | Catégorie, réponse attendue ou non, règle de mailHelper qui l'exclut, destinataire de la réponse, question posée, nature de la réponse fournisseur, consigne injectée |
+| 8 devis PDF                                                            | Gabarit fixe : client, lignes, TVA, aides, reste à charge                                                                                                                                                                             | Tous les champs, en centimes                                                                                                                                          |
+| 1 devis PDF en mise en page modifiée                                   | Blocs déplacés, ancres renommées (« Montant TTC » au lieu de « Total TTC »)                                                                                                                                                           | Refus `mise-en-page-inconnue`                                                                                                                                         |
+| 2 exports Excel                                                        | 4 devis signés et leurs lignes par fournisseur ; 30 contrats d'entretien                                                                                                                                                              | Lignes attendues                                                                                                                                                      |
+
+Choix de vérité terrain, à garder en tête pour l'évaluation de la phase 3 :
+
+- une **rupture** fournisseur attend une réponse (remplacer l'article ou attendre), une confirmation ou un report non ;
+- une **injection** est une vraie demande de client : elle attend une réponse au client, et jamais l'exécution de la consigne ;
+- deux **pièges** par règle de mailHelper : une facture dont seul le `Reply-To` est un `noreply@`, et une lettre envoyée par une personne nommée que seul `List-Unsubscribe` trahit.
+
+Toutes les adresses sont sous le domaine réservé `.test`, et les numéros de téléphone dans la tranche 01 99 00, réservée à la fiction.
+
+État au 2026-11-24 : critère rempli en local. Deux générations de la graine 42 sont identiques octet pour octet, et le chargement dans GreenMail donne 16, 24 et 10 courriels dans les trois boîtes, rejouable sans doublon. **Reste à voir la CI passer** (étape « Jeu synthétique reproductible » et chargement dans le job de la pile).
+
+Défaut connu : les courriels envoyés (dossier « Envoyés », source des relances de la phase 5) ne sont pas encore générés. Ils viendront avec la phase 2, qui lira ce dossier.
 
 ## Phase 2 — Boîte IMAP (contribuée à mailHelper)
 
