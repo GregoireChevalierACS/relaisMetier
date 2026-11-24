@@ -19,8 +19,8 @@ const { values } = parseArgs({
   options: { dossier: { type: 'string', default: DOSSIER_PAR_DEFAUT } },
 });
 const dossier = resoudre(values.dossier);
-const hote = process.env.IMAP_HOTE ?? '127.0.0.1';
-const port = Number(process.env.IMAP_PORT ?? '3143');
+const hote = process.env['IMAP_HOTE'] ?? '127.0.0.1';
+const port = Number(process.env['IMAP_PORT'] ?? '3143');
 
 // Seuls les champs utiles au chargement sont relus, et validés : le fichier a pu être modifié.
 const NOMS_DE_BOITES = Object.keys(BOITES).filter((cle): cle is Boite => cle in BOITES);
@@ -56,7 +56,9 @@ for (const boite of NOMS_DE_BOITES) {
         new Date(/^Date: (.+)$/m.exec(contenu.toString())?.[1] ?? 0),
       );
     }
-    const { messages } = await client.status('INBOX', { messages: true });
+    // status() renvoie false quand le serveur ne répond pas : compté comme une boîte vide.
+    const statut = await client.status('INBOX', { messages: true });
+    const messages = statut === false ? 0 : (statut.messages ?? 0);
     const conforme = messages === courriels.length;
     if (!conforme) echecs += 1;
     console.log(

@@ -11,4 +11,4 @@ export const DOSSIER_PAR_DEFAUT = fileURLToPath(
  * (INIT_CWD, fourni par pnpm), pas depuis le paquet où pnpm exécute le script.
  */
 export const resoudre = (chemin: string): string =>
-  resolve(process.env.INIT_CWD ?? process.cwd(), chemin);
+  resolve(process.env['INIT_CWD'] ?? process.cwd(), chemin);
