@@ -1,5 +1,6 @@
 pnpm-lock.yaml
 vendor/
+donnees-synthetiques/
 dist/
 coverage/
 reports/

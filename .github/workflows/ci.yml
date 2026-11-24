@@ -63,6 +63,13 @@ jobs:
       - name: Build de production
         run: pnpm build
 
+      # Critère de la phase 1 : la même graine redonne exactement les mêmes fichiers.
+      - name: Jeu synthétique reproductible
+        run: |
+          pnpm generer:jeu --graine 42 --sortie "$RUNNER_TEMP/jeu-a"
+          pnpm generer:jeu --graine 42 --sortie "$RUNNER_TEMP/jeu-b"
+          diff -r "$RUNNER_TEMP/jeu-a" "$RUNNER_TEMP/jeu-b"
+
       - name: Test de mutation
         run: pnpm test:mutation
 
@@ -75,7 +82,7 @@ jobs:
           if-no-files-found: ignore
 
   pile:
-    name: Workflows n8n et smoke test
+    name: Workflows n8n, smoke test et jeu synthétique
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -83,19 +90,34 @@ jobs:
         with:
           submodules: true
 
-      # Les scripts n'utilisent que Node : pas besoin d'installer les dépendances.
+      - uses: pnpm/action-setup@v6
+
       - uses: actions/setup-node@v7
         with:
           node-version-file: .node-version
+          cache: pnpm
+
+      - name: Installation reproductible
+        run: pnpm install --frozen-lockfile
 
       - name: Configuration de test (secrets aléatoires)
-        run: node scripts/creer-env.mjs
+        run: pnpm env:creer
 
       # Pile neuve : chaque workflow versionné doit s'importer dans un n8n vierge, et
       # « Vérifier le service » doit obtenir GET /sante → 200.
       - name: Import des workflows et smoke test
-        run: node scripts/smoke-test.mjs --arreter
+        run: pnpm smoke
+
+      # Le chargement vérifie lui-même que chaque boîte contient le nombre attendu de courriels.
+      - name: Chargement du jeu synthétique dans GreenMail
+        run: |
+          pnpm generer:jeu
+          pnpm jeu:charger
 
       - name: Journaux de la pile
         if: failure()
         run: docker compose logs --no-color
+
+      - name: Arrêt de la pile
+        if: always()
+        run: docker compose down --volumes

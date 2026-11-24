@@ -1,0 +1,29 @@
+{
+  "name": "@relaismetier/jeu-synthetique",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Jeu de données fictif et déterministe : courriels, devis PDF, exports Excel, et leurs attendus.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "generer": "tsx src/cli/generer.ts",
+    "charger": "tsx src/cli/charger.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "exceljs": "4.4.0",
+    "imapflow": "2.12.2",
+    "jszip": "3.10.2",
+    "pdfkit": "0.20.2",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "24.19.2",
+    "@types/pdfkit": "0.17.7",
+    "pdfjs-dist": "6.5.438",
+    "tsx": "4.23.15",
+    "vitest": "5.1.1"
+  }
+}

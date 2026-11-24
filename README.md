@@ -49,6 +49,17 @@ Toutes les variables sont décrites dans [.env.example](.env.example). `pnpm env
 
 **Sauvegardez `N8N_ENCRYPTION_KEY`** : sans elle, les identifiants enregistrés dans n8n sont illisibles.
 
+## Jeu de données synthétique
+
+Toutes les données du projet sont fictives et générées par graine :
+
+```sh
+pnpm generer:jeu --graine 42   # écrit donnees-synthetiques/ (courriels, devis PDF, exports Excel, attendus.json)
+pnpm jeu:charger               # vide les boîtes de GreenMail et y charge les courriels
+```
+
+La même graine redonne exactement les mêmes fichiers. Les attendus de chaque fichier (catégorie d'un courriel, champs d'un devis…) sont dans `attendus.json`. Le détail est dans la [feuille de route](ROADMAP.md#phase-1--jeu-de-données-synthétique).
+
 ## Modifier un workflow
 
 Les workflows sont du code : `n8n/workflows/*.json` fait foi.
@@ -71,6 +82,7 @@ Les workflows sont du code : `n8n/workflows/*.json` fait foi.
 | `pnpm test:mutation`     | Test de mutation du domaine (seuil 80 %)                 |
 | `pnpm build`             | Bundle du service                                        |
 | `pnpm smoke`             | Pile Docker, import des workflows, appel de `GET /sante` |
+| `pnpm generer:jeu`       | Jeu synthétique reproductible (`--graine`, `--sortie`)   |
 
 La CI les rejoue toutes, plus `pnpm audit` et le format des commits.
 

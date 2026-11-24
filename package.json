@@ -20,6 +20,8 @@
     "commits:check": "node scripts/verifier-commits.mjs",
     "n8n:exporter": "node scripts/n8n-exporter.mjs",
     "n8n:importer": "node scripts/n8n-importer.mjs",
+    "generer:jeu": "pnpm --filter @relaismetier/jeu-synthetique generer",
+    "jeu:charger": "pnpm --filter @relaismetier/jeu-synthetique charger",
     "env:creer": "node scripts/creer-env.mjs",
     "smoke": "node scripts/smoke-test.mjs"
   },

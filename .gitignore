@@ -29,3 +29,6 @@ pnpm-debug.log*
 .idea/
 .DS_Store
 Thumbs.db
+
+# Jeu synthétique généré (pnpm generer:jeu) : reproductible par sa graine, jamais versionné
+donnees-synthetiques/
