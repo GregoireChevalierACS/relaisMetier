@@ -59,9 +59,13 @@ export default {
     },
     {
       name: 'imap-confine',
-      comment: "Seul l'adapter imap ouvre une connexion aux boîtes.",
+      comment:
+        "Seul l'adapter imap ouvre une connexion aux boîtes. Exception : la commande qui charge le jeu synthétique dans GreenMail, outil de test jamais livré.",
       severity: 'error',
-      from: { pathNot: '^apps/service/src/(imap/|main\\.ts$)' },
+      from: {
+        pathNot:
+          '^apps/service/src/(imap/|main\\.ts$)|^packages/jeu-synthetique/src/cli/charger\\.ts$',
+      },
       to: { path: 'node_modules/imapflow/', dependencyTypesNot: ['type-only'] },
     },
     {
@@ -82,7 +86,8 @@ export default {
       comment:
         'Le code livré ne doit jamais importer un fichier de test, une doublure ou le jeu synthétique.',
       severity: 'error',
-      from: { pathNot: TESTS },
+      // Le jeu synthétique est lui-même un outil de test : il s'importe librement.
+      from: { pathNot: `${TESTS}|^packages/jeu-synthetique/` },
       to: { path: `${TESTS}|^packages/jeu-synthetique/` },
     },
     {

@@ -39,7 +39,14 @@ const SOURCES_DE_NON_DETERMINISME = [
 
 export default tseslint.config(
   {
-    ignores: ['vendor/**', '**/dist/**', '**/coverage/**', '**/reports/**', '**/.stryker-tmp/**'],
+    ignores: [
+      'vendor/**',
+      'donnees-synthetiques/**',
+      '**/dist/**',
+      '**/coverage/**',
+      '**/reports/**',
+      '**/.stryker-tmp/**',
+    ],
   },
   js.configs.recommended,
   tseslint.configs.strictTypeChecked,
