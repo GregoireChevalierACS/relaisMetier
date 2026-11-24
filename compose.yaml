@@ -1,0 +1,123 @@
+name: relaismetier
+
+# Configuration commune à n8n et à ses commandes (initialisation, import, export, exécution).
+x-n8n: &n8n
+  image: n8nio/n8n:2.48.7
+  environment: &n8n-environnement
+    DB_TYPE: postgresdb
+    DB_POSTGRESDB_HOST: postgres
+    DB_POSTGRESDB_DATABASE: n8n
+    DB_POSTGRESDB_USER: n8n
+    DB_POSTGRESDB_PASSWORD: ${N8N_DB_PASSWORD:?à définir dans .env (pnpm env:creer)}
+    N8N_ENCRYPTION_KEY: ${N8N_ENCRYPTION_KEY:?à définir dans .env (pnpm env:creer)}
+    GENERIC_TIMEZONE: Europe/Paris
+    TZ: Europe/Paris
+    N8N_DIAGNOSTICS_ENABLED: 'false'
+    N8N_PERSONALIZATION_ENABLED: 'false'
+    N8N_VERSION_NOTIFICATIONS_ENABLED: 'false'
+    N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS: 'true'
+    # Les expressions des workflows n'ont pas accès aux variables d'environnement (secrets compris).
+    N8N_BLOCK_ENV_ACCESS_IN_NODE: 'true'
+    # Interface servie en HTTP sur 127.0.0.1 en développement. Passe à true derrière Caddy (phase 9).
+    N8N_SECURE_COOKIE: 'false'
+  volumes:
+    - n8n-donnees:/home/node/.n8n
+  depends_on:
+    postgres:
+      condition: service_healthy
+
+services:
+  postgres:
+    image: postgres:18.7-alpine
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?à définir dans .env (pnpm env:creer)}
+      N8N_DB_PASSWORD: ${N8N_DB_PASSWORD:?à définir dans .env (pnpm env:creer)}
+      SERVICE_DB_PASSWORD: ${SERVICE_DB_PASSWORD:?à définir dans .env (pnpm env:creer)}
+    volumes:
+      # PostgreSQL 18 range ses données dans un sous-dossier versionné de /var/lib/postgresql.
+      - postgres-donnees:/var/lib/postgresql
+      - ./docker/postgres:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      # Par TCP : pendant l'initialisation, le serveur temporaire n'écoute que sur le socket Unix.
+      # Interroger le socket déclarerait la base prête avant la création des bases n8n et relais.
+      test: ['CMD-SHELL', 'pg_isready -h 127.0.0.1 -U postgres']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+
+  # Enregistre l'identifiant du service dans n8n, puis s'arrête.
+  n8n-init:
+    <<: *n8n
+    entrypoint: ['/bin/sh', '/scripts/initialiser.sh']
+    environment:
+      <<: *n8n-environnement
+      SECRET_PARTAGE: ${SECRET_PARTAGE:?à définir dans .env (pnpm env:creer)}
+    volumes:
+      - n8n-donnees:/home/node/.n8n
+      - ./docker/n8n:/scripts:ro
+    restart: 'no'
+
+  n8n:
+    <<: *n8n
+    # Seule interface exposée, et seulement à la machine locale.
+    ports:
+      - '127.0.0.1:5678:5678'
+    depends_on:
+      postgres:
+        condition: service_healthy
+      n8n-init:
+        condition: service_completed_successfully
+      service:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -q -O /dev/null http://localhost:5678/healthz || exit 1']
+      interval: 5s
+      timeout: 5s
+      retries: 30
+    restart: unless-stopped
+
+  # Commandes ponctuelles de la CLI n8n : pnpm n8n:importer, pnpm n8n:exporter, pnpm smoke.
+  n8n-cli:
+    <<: *n8n
+    profiles: [outils]
+    volumes:
+      - n8n-donnees:/home/node/.n8n
+      - ./n8n/workflows:/workflows
+    restart: 'no'
+
+  service:
+    build:
+      context: .
+      dockerfile: apps/service/Dockerfile
+    image: relaismetier/service:local
+    environment:
+      SECRET_PARTAGE: ${SECRET_PARTAGE:?à définir dans .env (pnpm env:creer)}
+    # Aucun port publié : le service n'est joignable que sur le réseau Docker interne.
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://localhost:3000/sante', { headers: { 'x-secret-partage': process.env.SECRET_PARTAGE } }).then((r) => process.exit(r.ok ? 0 : 1), () => process.exit(1))"
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  # Serveur SMTP et IMAP de test (Mailpit ne fait pas d'IMAP). Les comptes sont créés à la
+  # première connexion : l'authentification est désactivée, ce serveur ne sert qu'aux tests.
+  greenmail:
+    image: greenmail/standalone:2.1.15
+    environment:
+      GREENMAIL_OPTS: >-
+        -Dgreenmail.setup.test.smtp -Dgreenmail.setup.test.imap
+        -Dgreenmail.hostname=0.0.0.0 -Dgreenmail.auth.disabled
+    ports:
+      - '127.0.0.1:3025:3025'
+      - '127.0.0.1:3143:3143'
+    restart: unless-stopped
+
+volumes:
+  postgres-donnees:
+  n8n-donnees:
