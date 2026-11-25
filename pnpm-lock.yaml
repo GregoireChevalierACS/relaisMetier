@@ -39,8 +39,8 @@ importers:
         specifier: 9.1.7
         version: 9.1.7
       lint-staged:
-        specifier: 17.6.1
-        version: 17.6.1
+        specifier: 17.6.2
+        version: 17.6.2
       prettier:
         specifier: 3.10.1
         version: 3.10.1
@@ -58,7 +58,7 @@ importers:
     dependencies:
       '@hono/node-server':
         specifier: 2.1.11
-        version: 2.1.11(hono@4.13.19)
+        version: 2.1.11(hono@4.13.20)
       '@mailhelper/application':
         specifier: workspace:*
         version: link:../../vendor/mailHelper/packages/application
@@ -72,8 +72,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/application
       hono:
-        specifier: 4.13.19
-        version: 4.13.19
+        specifier: 4.13.20
+        version: 4.13.20
       zod:
         specifier: 4.6.7
         version: 4.6.7
@@ -104,8 +104,8 @@ importers:
         version: 4.6.7
     devDependencies:
       fast-check:
-        specifier: 4.10.3
-        version: 4.10.3
+        specifier: 4.11.0
+        version: 4.11.0
       vitest:
         specifier: 5.1.1
         version: 5.1.1(@types/node@24.19.2)(@vitest/coverage-v8@5.1.1)(vite@8.3.8(@types/node@24.19.2)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))
@@ -122,8 +122,8 @@ importers:
         specifier: 10.1.1
         version: 10.1.1(@stryker-mutator/core@10.1.1(@types/node@24.19.2))(vitest@5.1.1)
       fast-check:
-        specifier: 4.10.3
-        version: 4.10.3
+        specifier: 4.11.0
+        version: 4.11.0
       vitest:
         specifier: 5.1.1
         version: 5.1.1(@types/node@24.19.2)(@vitest/coverage-v8@5.1.1)(vite@8.3.8(@types/node@24.19.2)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))
@@ -2100,6 +2100,10 @@ packages:
     resolution: {integrity: sha512-SBaU6nhh+sXxb05r2IHAKfxnR/1Pu6MqtHYaewM1BY6V5xzOxOk+4yoWO7WfeeyZG1iArFE6/DO/7iLYMUuOJg==}
     engines: {node: '>=12.17.0'}
 
+  fast-check@4.11.0:
+    resolution: {integrity: sha512-V4Uc238rhQOdQlc+Gz7JG6SGBtrWnWL8d/6RyiBeCMcNKMhF6DZ0KkAVHJSyNV5r4lA0PmIpZ6iRpTVoz4qjoA==}
+    engines: {node: '>=12.17.0'}
+
   fast-csv@4.3.6:
     resolution: {integrity: sha512-2RNSpuwwsJGP0frGsOmTb9oUF+VkFSM4SyLTDgwf2ciHWTarN0lQTC+F2f/t5J9QjW+c65VFIAAu85GsvMIusw==}
     engines: {node: '>=10.0.0'}
@@ -2293,8 +2297,8 @@ packages:
     resolution: {integrity: sha512-F/1DnUGPopORZi0ni+CvrCgHQ5FyEAHRLSApuYWMmrbSwoN2Mn/7k+Gl38gJnR7yyDZk6WLXwiGod1JOWNDKGw==}
     hasBin: true
 
-  hono@4.13.19:
-    resolution: {integrity: sha512-KmXvQAXwcAHV+muzbIwoJ23niEB5nMoDVr9WcRkU8mvjUECm/1+7v4Jgp7P7a+H6MLFrh+vXrGonGrGS+RQfkA==}
+  hono@4.13.20:
+    resolution: {integrity: sha512-xo6gecEJQ+CjTtOUUbcLHE8CdRKMeF4qITe+DT+OhFnSUmZR/ZBa9XavAfiGh4HlukmlaHFdaK4dz5tkTYFNmA==}
     engines: {node: '>=16.9.0'}
 
   hookable@6.1.2:
@@ -2687,8 +2691,8 @@ packages:
   linkify-it@6.1.0:
     resolution: {integrity: sha512-wJ/TwpSDTLepCrQoYWYIExIKg5Zchex2Nn5yk2mFnB+6PtdkHtyLx742md9csRjjOnGkKIS/RrbY7l8D6gT9Vw==}
 
-  lint-staged@17.6.1:
-    resolution: {integrity: sha512-3MXgVN7BERDR/6CXZs2fDHGc+r0+hlvGAa9wqMlVbIS6RVRuaPOnb5SnN6wMXulwfEy9DXVkMVUN/8cUlpPDnw==}
+  lint-staged@17.6.2:
+    resolution: {integrity: sha512-c/JaXaXmleubmKUwwp4OAcq55RV9Z3HTUNdqdqPh2srtmP9Of3bcR6o00GoWDUye+9JhMuoYkhYqAVPIOZKcsw==}
     engines: {node: '>=22.22.1'}
     hasBin: true
 
@@ -4247,9 +4251,9 @@ snapshots:
       lodash.isundefined: 3.0.1
       lodash.uniq: 4.5.0
 
-  '@hono/node-server@2.1.11(hono@4.13.19)':
+  '@hono/node-server@2.1.11(hono@4.13.20)':
     dependencies:
-      hono: 4.13.19
+      hono: 4.13.20
 
   '@humanfs/core@0.19.2':
     dependencies:
@@ -5559,6 +5563,10 @@ snapshots:
     dependencies:
       pure-rand: 8.4.2
 
+  fast-check@4.11.0:
+    dependencies:
+      pure-rand: 8.4.2
+
   fast-csv@4.3.6:
     dependencies:
       '@fast-csv/format': 4.3.5
@@ -5755,7 +5763,7 @@ snapshots:
 
   he@1.2.0: {}
 
-  hono@4.13.19: {}
+  hono@4.13.20: {}
 
   hookable@6.1.2: {}
 
@@ -6098,7 +6106,7 @@ snapshots:
     dependencies:
       uc.micro: 3.0.0
 
-  lint-staged@17.6.1:
+  lint-staged@17.6.2:
     dependencies:
       picomatch: 4.0.7
       string-argv: 0.4.0
