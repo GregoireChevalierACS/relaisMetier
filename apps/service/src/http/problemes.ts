@@ -5,6 +5,9 @@ import type { Context } from 'hono';
 const CATALOGUE = {
   'non-authentifie': { status: 401, title: 'Secret partagé absent ou invalide' },
   introuvable: { status: 404, title: 'Route inconnue' },
+  'boite-inconnue': { status: 404, title: 'Boîte inconnue' },
+  // 502 : la panne est chez le serveur de messagerie, pas dans le service.
+  'boite-injoignable': { status: 502, title: 'Boîte injoignable' },
   'erreur-interne': { status: 500, title: 'Erreur interne' },
 } as const;
 
