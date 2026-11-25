@@ -1,0 +1,38 @@
+[
+  {
+    "id": "devis",
+    "adresse": "devis@atelier-thermique.test",
+    "nom": "Atelier Thermique Démo",
+    "parallelisme": 2,
+    "imap": {
+      "hote": "greenmail",
+      "port": 3143,
+      "securise": false,
+      "utilisateur": "devis@atelier-thermique.test"
+    }
+  },
+  {
+    "id": "accueil",
+    "adresse": "accueil@atelier-thermique.test",
+    "nom": "Atelier Thermique Démo",
+    "parallelisme": 2,
+    "imap": {
+      "hote": "greenmail",
+      "port": 3143,
+      "securise": false,
+      "utilisateur": "accueil@atelier-thermique.test"
+    }
+  },
+  {
+    "id": "commandes",
+    "adresse": "commandes@atelier-thermique.test",
+    "nom": "Atelier Thermique Démo",
+    "parallelisme": 2,
+    "imap": {
+      "hote": "greenmail",
+      "port": 3143,
+      "securise": false,
+      "utilisateur": "commandes@atelier-thermique.test"
+    }
+  }
+]

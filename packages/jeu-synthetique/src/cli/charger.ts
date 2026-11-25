@@ -1,6 +1,7 @@
-// Charge les courriels du jeu dans les boîtes du serveur de test GreenMail : chaque boîte est
-// vidée, puis reçoit ses courriels dans sa boîte de réception (IMAP APPEND), avec leur date
-// d'origine. Relancer la commande redonne exactement le même état.
+// Charge le jeu dans les boîtes du serveur de test GreenMail : pour chaque boîte, la boîte de
+// réception reçoit ses courriels, et le dossier « Sent » les devis envoyés (IMAP APPEND), avec
+// leur date d'origine. Chaque dossier est vidé avant : relancer la commande redonne exactement
+// le même état.
 //
 // Usage : pnpm jeu:charger [--dossier donnees-synthetiques]
 // Variables : IMAP_HOTE (127.0.0.1), IMAP_PORT (3143)
@@ -24,17 +25,42 @@ const port = Number(process.env['IMAP_PORT'] ?? '3143');
 
 // Seuls les champs utiles au chargement sont relus, et validés : le fichier a pu être modifié.
 const NOMS_DE_BOITES = Object.keys(BOITES).filter((cle): cle is Boite => cle in BOITES);
-const schema = z.object({
-  courriels: z.array(z.object({ boite: z.enum(NOMS_DE_BOITES), fichier: z.string() })),
-});
-const manifeste = schema.parse(
-  JSON.parse(await readFile(join(dossier, FICHIER_DU_MANIFESTE), 'utf8')),
-);
+const schemaDeMessage = z.object({ boite: z.enum(NOMS_DE_BOITES), fichier: z.string() });
+const manifeste = z
+  .object({ courriels: z.array(schemaDeMessage), envoyes: z.array(schemaDeMessage) })
+  .parse(JSON.parse(await readFile(join(dossier, FICHIER_DU_MANIFESTE), 'utf8')));
+
+/** Dossier des messages envoyés : « Sent », que les messageries reconnaissent comme tel. */
+const ENVOYES = 'Sent';
+
+/** Vide le dossier (créé au besoin), y dépose les messages, et renvoie le nombre obtenu. */
+async function remplir(
+  client: ImapFlow,
+  chemin: string,
+  fichiers: readonly string[],
+): Promise<number> {
+  if (!(await client.list()).some(({ path }) => path === chemin))
+    await client.mailboxCreate(chemin);
+  await client.mailboxOpen(chemin);
+  await client.messageDelete('1:*');
+  for (const fichier of fichiers) {
+    const contenu = await readFile(join(dossier, fichier));
+    const date = /^Date: (.+)$/m.exec(contenu.toString())?.[1] ?? 0;
+    await client.append(chemin, contenu, [], new Date(date));
+  }
+  // status() renvoie false quand le serveur ne répond pas : compté comme un dossier vide.
+  const statut = await client.status(chemin, { messages: true });
+  return statut === false ? 0 : (statut.messages ?? 0);
+}
 
 let echecs = 0;
 for (const boite of NOMS_DE_BOITES) {
   const adresse = BOITES[boite];
-  const courriels = manifeste.courriels.filter((courriel) => courriel.boite === boite);
+  const fichiersDe = (messages: readonly z.infer<typeof schemaDeMessage>[]) =>
+    messages.filter((message) => message.boite === boite).map(({ fichier }) => fichier);
+  const recus = fichiersDe(manifeste.courriels);
+  const envoyes = fichiersDe(manifeste.envoyes);
+
   // GreenMail tourne sans authentification : le compte est créé à la première connexion.
   const client = new ImapFlow({
     host: hote,
@@ -45,24 +71,12 @@ for (const boite of NOMS_DE_BOITES) {
   });
   await client.connect();
   try {
-    await client.mailboxOpen('INBOX');
-    await client.messageDelete('1:*');
-    for (const courriel of courriels) {
-      const contenu = await readFile(join(dossier, courriel.fichier));
-      await client.append(
-        'INBOX',
-        contenu,
-        [],
-        new Date(/^Date: (.+)$/m.exec(contenu.toString())?.[1] ?? 0),
-      );
-    }
-    // status() renvoie false quand le serveur ne répond pas : compté comme une boîte vide.
-    const statut = await client.status('INBOX', { messages: true });
-    const messages = statut === false ? 0 : (statut.messages ?? 0);
-    const conforme = messages === courriels.length;
+    const dansLaReception = await remplir(client, 'INBOX', recus);
+    const dansLesEnvoyes = await remplir(client, ENVOYES, envoyes);
+    const conforme = dansLaReception === recus.length && dansLesEnvoyes === envoyes.length;
     if (!conforme) echecs += 1;
     console.log(
-      `${conforme ? '✔' : '✖'} ${adresse} : ${String(messages)}/${String(courriels.length)} courriels.`,
+      `${conforme ? '✔' : '✖'} ${adresse} : ${String(dansLaReception)}/${String(recus.length)} reçus, ${String(dansLesEnvoyes)}/${String(envoyes.length)} envoyés.`,
     );
   } finally {
     await client.logout();

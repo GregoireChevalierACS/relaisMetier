@@ -93,6 +93,13 @@ services:
     image: relaismetier/service:local
     environment:
       SECRET_PARTAGE: ${SECRET_PARTAGE:?à définir dans .env (pnpm env:creer)}
+      FICHIER_DES_BOITES: /config/boites.json
+      BOITE_DEVIS_MOT_DE_PASSE: ${BOITE_DEVIS_MOT_DE_PASSE:?à définir dans .env (pnpm env:creer)}
+      BOITE_ACCUEIL_MOT_DE_PASSE: ${BOITE_ACCUEIL_MOT_DE_PASSE:?à définir dans .env (pnpm env:creer)}
+      BOITE_COMMANDES_MOT_DE_PASSE: ${BOITE_COMMANDES_MOT_DE_PASSE:?à définir dans .env (pnpm env:creer)}
+    # Boîtes relevées (sans secret, versionnées) : les mots de passe viennent de .env.
+    volumes:
+      - ./config:/config:ro
     # Aucun port publié : le service n'est joignable que sur le réseau Docker interne.
     healthcheck:
       test:

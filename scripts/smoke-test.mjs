@@ -51,4 +51,28 @@ if (execution.status !== 'success' || reponse?.statut !== 'ok') {
 }
 console.log(`✔ Le workflow ${WORKFLOW} a appelé GET /sante : ${JSON.stringify(reponse)}.`);
 
+/**
+ * Appelle une route du service depuis son propre conteneur (il n'est joignable que sur le réseau
+ * interne), avec le secret partagé qu'il connaît déjà.
+ */
+function appelerLeService(chemin) {
+  const script = `fetch('http://localhost:3000${chemin}', { headers: { 'x-secret-partage': process.env.SECRET_PARTAGE } }).then(async (r) => { console.log(JSON.stringify({ statut: r.status, corps: await r.json() })); })`;
+  const { sortie: brute } = dockerCompose(['exec', '-T', 'service', 'node', '-e', script], {
+    capturer: true,
+  });
+  return JSON.parse(brute);
+}
+
+// Chaque boîte configurée doit être joignable par l'adapter IMAP de mailHelper.
+const boites = appelerLeService('/boites');
+if (boites.statut !== 200 || boites.corps.length === 0) {
+  echouer(`GET /boites a répondu ${JSON.stringify(boites)}`);
+}
+for (const { id } of boites.corps) {
+  const connexion = appelerLeService(`/boites/${id}/connexion`);
+  if (connexion.statut !== 200)
+    echouer(`la boîte ${id} est injoignable : ${JSON.stringify(connexion)}`);
+  console.log(`✔ Boîte ${id} joignable en IMAP : ${JSON.stringify(connexion.corps)}.`);
+}
+
 if (arreter) dockerCompose(['down', '--volumes']);
