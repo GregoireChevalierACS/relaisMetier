@@ -22,12 +22,13 @@ describe('genererLeJeu', async () => {
     expect(autre.get(FICHIER_DU_MANIFESTE)).not.toEqual(fichiers.get(FICHIER_DU_MANIFESTE));
   });
 
-  it('écrit 50 courriels, 8 devis, une variante, 2 exports et le manifeste', () => {
-    expect([...fichiers.keys()].filter((c) => c.endsWith('.eml'))).toHaveLength(50);
+  it('écrit 50 courriels reçus, 8 envois de devis, 8 devis, une variante, 2 exports et le manifeste', () => {
+    expect([...fichiers.keys()].filter((c) => c.startsWith('courriels/'))).toHaveLength(50);
+    expect([...fichiers.keys()].filter((c) => c.startsWith('envoyes/'))).toHaveLength(8);
     expect([...fichiers.keys()].filter((c) => c.endsWith('.pdf'))).toHaveLength(9);
     expect(fichiers.has(CHEMINS.devisSignes)).toBe(true);
     expect(fichiers.has(CHEMINS.contrats)).toBe(true);
-    expect(fichiers.size).toBe(62);
+    expect(fichiers.size).toBe(70);
   });
 
   it('écrit dans le manifeste l’empreinte de chaque autre fichier', () => {
@@ -74,5 +75,21 @@ describe('genererLeJeu', async () => {
       },
     ]);
     for (const devis of jeu.manifeste.devis) expect(fichiers.has(devis.fichier)).toBe(true);
+  });
+
+  it('envoie chaque devis à son client depuis la boîte devis@, PDF joint', () => {
+    expect(jeu.manifeste.envoyes).toHaveLength(8);
+    for (const envoi of jeu.manifeste.envoyes) {
+      const devis = jeu.manifeste.devis.find(
+        (d) => d.miseEnPage === 'reference' && d.attendu.numero === envoi.devis,
+      );
+      expect(devis?.miseEnPage === 'reference' ? devis.attendu.client.courriel : null).toBe(
+        envoi.destinataire,
+      );
+      const texte = fichiers.get(envoi.fichier)?.toString() ?? '';
+      expect(texte).toContain(`Message-ID: ${envoi.messageId}`);
+      expect(texte).toContain(`filename="${envoi.devis}.pdf"`);
+      expect(envoi.envoyeLe < jeu.manifeste.jourDeReference).toBe(true);
+    }
   });
 });

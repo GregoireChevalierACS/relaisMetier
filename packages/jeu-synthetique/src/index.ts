@@ -19,6 +19,7 @@ export {
   GRAINE_PAR_DEFAUT,
   type CourrielAttendu,
   type DevisAttendu,
+  type EnvoiAttendu,
   type FichierGenere,
   type Jeu,
   type Manifeste,
