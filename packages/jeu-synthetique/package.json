@@ -16,7 +16,7 @@
     "exceljs": "4.4.0",
     "imapflow": "2.12.2",
     "jszip": "3.10.2",
-    "pdfkit": "0.20.2",
+    "pdfkit": "0.21.0",
     "zod": "4.6.7"
   },
   "devDependencies": {
