@@ -109,23 +109,26 @@ Toutes les adresses sont sous le domaine réservé `.test`, et les numéros de t
 
 **Terminée le 2026-11-24** (PR #6) : deux générations de la graine 42 sont identiques octet pour octet, et le chargement dans GreenMail donne 16, 24 et 10 courriels dans les trois boîtes, rejouable sans doublon. La CI le vérifie à chaque PR.
 
-Défaut connu : les courriels envoyés (dossier « Envoyés », source des relances de la phase 5) ne sont pas encore générés. Ils viendront avec la phase 2, qui lira ce dossier.
+Complété en phase 2 : les 8 devis sont aussi envoyés depuis `devis@` (dossier « Sent », PDF joint), avec leurs attendus dans `attendus.json` (`envoyes`).
 
 ## Phase 2 — Boîte IMAP (contribuée à mailHelper)
 
 **Terminée quand** : `BoiteImap` passe le test de contrat `verifierLeContratDeLaBoiteDeReception` de mailHelper contre GreenMail en CI, et un brouillon déposé apparaît dans le dossier Brouillons avec sa pièce jointe.
 
-- [ ] Adapter `BoiteImap` (imapflow) qui implémente `BoiteDeReception`, **dans mailHelper** : c'est du code générique.
-- [ ] Nouveau port `DepositaireDeBrouillon` (IMAP `APPEND` dans le dossier des brouillons, avec le drapeau `\Draft`).
-- [ ] Lecture du dossier « Envoyés », nécessaire aux relances.
-- [ ] **Idempotence** : un courriel relu deux fois n'est traité qu'une fois. La clé est le couple `UIDVALIDITY` + `UID`, et le `Message-ID` sert de repli.
-- [ ] Plusieurs boîtes, chacune avec ses identifiants et son parallélisme borné.
+- [x] Adapter `BoiteImap` (imapflow) qui implémente `BoiteDeReception`, **dans mailHelper** : c'est du code générique ([mailHelper#9](https://github.com/GregoireChevalierACS/mailHelper/pull/9), ADR 0008 de mailHelper).
+- [x] Nouveau port `DepositaireDeBrouillon` (IMAP `APPEND` dans le dossier des brouillons, avec le drapeau `\Draft`), tenu par un contrat : pièces jointes restituées octet pour octet.
+- [x] Lecture du dossier « Envoyés », nécessaire aux relances, et envois de devis ajoutés au jeu synthétique.
+- [x] Plusieurs boîtes, chacune avec ses identifiants et son parallélisme borné : [config/boites.json](config/boites.json) (versionné, sans secret) et `BOITE_<ID>_MOT_DE_PASSE` dans `.env`. `GET /boites` les liste pour n8n, `GET /boites/:id/connexion` vérifie l'accès IMAP (smoke test).
+- Déplacé en phase 3 : l'**idempotence** (un courriel relu deux fois n'est traité qu'une fois). Elle demande le relevé et une base qui retient ce qui a été traité ; la clé `UIDVALIDITY:UID` existe déjà.
+
+État au 2026-11-25 : critère rempli dans la CI de mailHelper (contrats de la boîte et du dépositaire contre GreenMail). Ici, le smoke test joint les trois boîtes par l'adapter IMAP, et le chargement du jeu remplit réception et envoyés. **Reste à voir la CI de relaisMetier passer** avec le sous-module à jour.
 
 ## Phase 3 — Tri et brouillons de réponse
 
 **Terminée quand** : sur les 50 courriels d'évaluation du jeu synthétique, le tri donne la bonne décision « réponse attendue » dans au moins 90 % des cas. Aucun robot ni aucune lettre d'information ne reçoit de brouillon. Le temps et le coût d'un relevé de 30 courriels sont mesurés et notés ici.
 
-- [ ] Workflow n8n `relever-les-boites` : toutes les 3 à 5 minutes, il appelle `POST /boites/:id/relever` pour chaque boîte.
+- [ ] Workflow n8n `relever-les-boites` : toutes les 3 à 5 minutes, il lit `GET /boites` puis appelle `POST /boites/:id/relever` pour chaque boîte.
+- [ ] **Idempotence** (venue de la phase 2) : un courriel relu deux fois n'est traité qu'une fois. La clé est `UIDVALIDITY:UID` ; le `Message-ID` en repli demande de l'ajouter au `Courriel` de mailHelper.
 - [ ] Chaîne de décision : règles déterministes de mailHelper d'abord, puis **Claude Haiku 5.5** pour le tri et **Claude Sonnet 5.5** pour la rédaction, seulement si une réponse est attendue.
 - [ ] Base de réponses aux questions récurrentes (fichier Markdown versionné), placée dans un préfixe de consigne mis en cache.
 - [ ] Jeu d'évaluation rejoué à chaque changement de consigne ou de modèle (`pnpm evaluer`), sans jamais toucher le modèle dans les tests unitaires.

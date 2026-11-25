@@ -37,7 +37,7 @@ pnpm smoke              # démarre la pile, importe les workflows, exécute « V
 | ----------- | ------------------------------------------------------------------------------ | ------------------------ |
 | `n8n`       | Planifie, déclenche, réessaie, alerte                                          | `127.0.0.1:5678`         |
 | `n8n-init`  | Enregistre l'identifiant du service dans n8n à chaque démarrage, puis s'arrête | —                        |
-| `service`   | Règles métier, accès aux boîtes (`GET /sante` pour l'instant)                  | aucun (réseau interne)   |
+| `service`   | Règles métier, accès aux boîtes (`/sante`, `/boites`, `/boites/:id/connexion`) | aucun (réseau interne)   |
 | `postgres`  | Une base `n8n`, une base `relais`, chacune avec son rôle                       | aucun                    |
 | `greenmail` | Serveur SMTP et IMAP de test                                                   | `127.0.0.1:3025`, `3143` |
 
@@ -45,7 +45,13 @@ Le service n'est joignable que par n8n, et chaque route exige l'en-tête `x-secr
 
 ## Configuration
 
-Toutes les variables sont décrites dans [.env.example](.env.example). `pnpm env:creer` ne remplace jamais un `.env` existant.
+Toutes les variables sont décrites dans [.env.example](.env.example). `pnpm env:creer` ne remplace jamais un `.env` existant : il le complète seulement avec les variables apparues depuis dans le modèle.
+
+### Boîtes relevées
+
+Les boîtes partagées sont décrites dans [config/boites.json](config/boites.json) : identifiant, adresse, serveur IMAP, parallélisme. Ce fichier est versionné et ne contient aucun secret. Le mot de passe de chaque boîte vient de `.env` (`BOITE_<ID>_MOT_DE_PASSE`, par exemple `BOITE_DEVIS_MOT_DE_PASSE`).
+
+Le fichier fourni décrit les trois boîtes de démonstration sur GreenMail. Chez un hébergeur réel, il faut `"port": 993`, `"securise": true` et un mot de passe d'application.
 
 **Sauvegardez `N8N_ENCRYPTION_KEY`** : sans elle, les identifiants enregistrés dans n8n sont illisibles.
 
@@ -55,7 +61,7 @@ Toutes les données du projet sont fictives et générées par graine :
 
 ```sh
 pnpm generer:jeu --graine 42   # écrit donnees-synthetiques/ (courriels, devis PDF, exports Excel, attendus.json)
-pnpm jeu:charger               # vide les boîtes de GreenMail et y charge les courriels
+pnpm jeu:charger               # vide les boîtes de GreenMail, y charge les courriels reçus et les devis envoyés
 ```
 
 La même graine redonne exactement les mêmes fichiers. Les attendus de chaque fichier (catégorie d'un courriel, champs d'un devis…) sont dans `attendus.json`. Le détail est dans la [feuille de route](ROADMAP.md#phase-1--jeu-de-données-synthétique).
