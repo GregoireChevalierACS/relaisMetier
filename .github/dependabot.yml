@@ -12,6 +12,9 @@ updates:
       # typescript-eslint 8 ne supporte que TypeScript < 6.1 (voir docs/adr/0003).
       - dependency-name: typescript
         versions: ['>=6.1.0']
+      # Les types suivent la version majeure de Node du projet (voir docs/adr/0003).
+      - dependency-name: '@types/node'
+        update-types: ['version-update:semver-major']
 
   - package-ecosystem: github-actions
     directory: /
@@ -29,6 +32,10 @@ updates:
     directory: /apps/service
     schedule:
       interval: weekly
+    ignore:
+      # L'image suit la version majeure de Node du projet (voir docs/adr/0003).
+      - dependency-name: node
+        update-types: ['version-update:semver-major']
 
   # mailHelper et FindAndFill : chaque nouvelle version arrive en PR et passe la CI complète.
   - package-ecosystem: gitsubmodule
