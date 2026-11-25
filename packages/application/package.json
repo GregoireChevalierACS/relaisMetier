@@ -11,6 +11,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@mailhelper/application": "workspace:*",
+    "@mailhelper/domain": "workspace:*",
     "@relaismetier/domain": "workspace:*",
     "zod": "4.6.7"
   },
