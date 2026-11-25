@@ -107,7 +107,7 @@ Choix de vérité terrain, à garder en tête pour l'évaluation de la phase 3 :
 
 Toutes les adresses sont sous le domaine réservé `.test`, et les numéros de téléphone dans la tranche 01 99 00, réservée à la fiction.
 
-État au 2026-11-24 : critère rempli en local. Deux générations de la graine 42 sont identiques octet pour octet, et le chargement dans GreenMail donne 16, 24 et 10 courriels dans les trois boîtes, rejouable sans doublon. **Reste à voir la CI passer** (étape « Jeu synthétique reproductible » et chargement dans le job de la pile).
+**Terminée le 2026-11-24** (PR #6) : deux générations de la graine 42 sont identiques octet pour octet, et le chargement dans GreenMail donne 16, 24 et 10 courriels dans les trois boîtes, rejouable sans doublon. La CI le vérifie à chaque PR.
 
 Défaut connu : les courriels envoyés (dossier « Envoyés », source des relances de la phase 5) ne sont pas encore générés. Ils viendront avec la phase 2, qui lira ce dossier.
 
