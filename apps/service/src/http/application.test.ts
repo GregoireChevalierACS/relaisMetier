@@ -7,7 +7,12 @@ import {
   unCourriel,
 } from '@mailhelper/application/testing';
 import type { BoiteDeReception } from '@mailhelper/application';
-import { creerLesCasDUsageDesBoites, type BoiteGeree } from '@relaismetier/application';
+import {
+  creerLesCasDUsageDesBoites,
+  type BoiteGeree,
+  type JournalDesTraitements,
+} from '@relaismetier/application';
+import { JournalEnMemoire, journalEnPanne } from '@relaismetier/application/testing';
 import { describe, expect, it, vi } from 'vitest';
 
 import { creerLApplication } from './application.js';
@@ -28,12 +33,16 @@ const uneBoite = (
 });
 
 /** La même application qu'en production : seules les boîtes, en mémoire, changent. */
-function uneApplication(signalerUnePanne: (erreur: unknown) => void = vi.fn()) {
+function uneApplication(
+  signalerUnePanne: (erreur: unknown) => void = vi.fn(),
+  journal: JournalDesTraitements = new JournalEnMemoire(),
+) {
   const boites = creerLesCasDUsageDesBoites({
     boites: [
       uneBoite('devis', new BoiteEnMemoire([unCourriel({ recuLe: INSTANT_DE_REFERENCE })])),
       uneBoite('accueil', boiteEnPanne()),
     ],
+    journal,
     horloge: new HorlogeFixe(),
     signalerUnePanne,
   });
@@ -141,5 +150,63 @@ describe('GET /boites/:id/connexion', () => {
     expect(texte).toContain('urn:relaismetier:probleme:boite-injoignable');
     expect(texte).not.toContain('réseau coupé');
     expect(signalerUnePanne).toHaveBeenCalledOnce();
+  });
+});
+
+describe('POST /boites/:id/relever', () => {
+  it('relève la boîte et rend compte de ce qui a été fait', async () => {
+    const reponse = await uneApplication().request('/boites/devis/relever', {
+      method: 'POST',
+      ...authentifiee(),
+    });
+
+    expect(reponse.status).toBe(200);
+    expect(await reponse.json()).toEqual({
+      lus: 1,
+      nouveaux: 1,
+      dejaConnus: 0,
+      sansReponse: 0,
+      aTrier: 1,
+      illisibles: 0,
+    });
+  });
+
+  it('ne refait rien quand n8n rejoue le même relevé', async () => {
+    const application = uneApplication();
+    const relever = () =>
+      application.request('/boites/devis/relever', { method: 'POST', ...authentifiee() });
+    await relever();
+    expect(await (await relever()).json()).toMatchObject({ nouveaux: 0, dejaConnus: 1 });
+  });
+
+  it.each([
+    ['inconnue', 404, 'boite-inconnue'],
+    ['accueil', 502, 'boite-injoignable'],
+  ])('répond en Problem Details pour la boîte %s', async (id, statut, type) => {
+    const reponse = await uneApplication().request(`/boites/${id}/relever`, {
+      method: 'POST',
+      ...authentifiee(),
+    });
+    expect(reponse.status).toBe(statut);
+    expect(await reponse.json()).toMatchObject({ type: `urn:relaismetier:probleme:${type}` });
+  });
+
+  it('répond 500 sans détail quand la base est injoignable', async () => {
+    const signalerUnePanne = vi.fn();
+    const reponse = await uneApplication(signalerUnePanne, journalEnPanne()).request(
+      '/boites/devis/relever',
+      {
+        method: 'POST',
+        ...authentifiee(),
+      },
+    );
+    expect(reponse.status).toBe(500);
+    expect(await reponse.text()).not.toContain('base injoignable');
+    expect(signalerUnePanne).toHaveBeenCalledOnce();
+  });
+
+  it('n’accepte pas un relevé en GET', async () => {
+    const reponse = await uneApplication().request('/boites/devis/relever', authentifiee());
+    expect(reponse.status).toBe(404);
   });
 });

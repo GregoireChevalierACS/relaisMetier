@@ -16,7 +16,4 @@ export default {
   reporters: ['clear-text', 'progress', 'html'],
   htmlReporter: { fileName: 'reports/mutation/index.html' },
   tempDirName: '.stryker-tmp',
-  // Phase 0 : le domaine est encore vide. À retirer avec le premier concept métier, pour qu'un
-  // domaine sans test redevienne une erreur.
-  allowEmpty: true,
 };

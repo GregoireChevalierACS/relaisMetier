@@ -2,7 +2,6 @@
   "id": "verifierService1",
   "name": "Vérifier le service",
   "description": null,
-  "active": false,
   "isArchived": false,
   "nodes": [
     {

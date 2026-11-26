@@ -93,6 +93,8 @@ services:
     image: relaismetier/service:local
     environment:
       SECRET_PARTAGE: ${SECRET_PARTAGE:?à définir dans .env (pnpm env:creer)}
+      # Base et rôle « relais », créés au premier démarrage de PostgreSQL (docker/postgres).
+      URL_DE_LA_BASE: postgres://relais:${SERVICE_DB_PASSWORD:?à définir dans .env (pnpm env:creer)}@postgres:5432/relais
       FICHIER_DES_BOITES: /config/boites.json
       BOITE_DEVIS_MOT_DE_PASSE: ${BOITE_DEVIS_MOT_DE_PASSE:?à définir dans .env (pnpm env:creer)}
       BOITE_ACCUEIL_MOT_DE_PASSE: ${BOITE_ACCUEIL_MOT_DE_PASSE:?à définir dans .env (pnpm env:creer)}
@@ -100,6 +102,10 @@ services:
     # Boîtes relevées (sans secret, versionnées) : les mots de passe viennent de .env.
     volumes:
       - ./config:/config:ro
+    # Le service applique ses migrations au démarrage : la base doit être prête avant.
+    depends_on:
+      postgres:
+        condition: service_healthy
     # Aucun port publié : le service n'est joignable que sur le réseau Docker interne.
     healthcheck:
       test:
@@ -111,6 +117,23 @@ services:
       timeout: 5s
       retries: 10
     restart: unless-stopped
+
+  # Base jetable pour les tests du journal PostgreSQL (pnpm test) : en mémoire, publiée seulement
+  # sur la machine locale, sans lien avec la base de la pile. docker compose --profile tests up -d
+  postgres-tests:
+    image: postgres:18.7-alpine
+    profiles: [tests]
+    environment:
+      POSTGRES_PASSWORD: test
+    tmpfs:
+      - /var/lib/postgresql
+    ports:
+      - '127.0.0.1:5433:5432'
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -h 127.0.0.1 -U postgres']
+      interval: 2s
+      timeout: 5s
+      retries: 30
 
   # Serveur SMTP et IMAP de test (Mailpit ne fait pas d'IMAP). Les comptes sont créés à la
   # première connexion : l'authentification est désactivée, ce serveur ne sert qu'aux tests.

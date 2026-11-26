@@ -1,0 +1,147 @@
+{
+  "id": "releverBoites001",
+  "name": "Relever les boîtes",
+  "description": null,
+  "isArchived": false,
+  "nodes": [
+    {
+      "id": "0b7a6f3e-5c1d-4e2a-9f10-2a3b4c5d6e01",
+      "name": "Toutes les 5 minutes",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 5
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "0b7a6f3e-5c1d-4e2a-9f10-2a3b4c5d6e02",
+      "name": "Lancement manuel",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        200
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "0b7a6f3e-5c1d-4e2a-9f10-2a3b4c5d6e03",
+      "name": "GET /boites",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        240,
+        100
+      ],
+      "parameters": {
+        "url": "http://service:3000/boites",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "serviceRelais001",
+          "name": "Service relaisMetier"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000
+    },
+    {
+      "id": "0b7a6f3e-5c1d-4e2a-9f10-2a3b4c5d6e04",
+      "name": "POST /boites/:id/relever",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        480,
+        100
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ 'http://service:3000/boites/' + encodeURIComponent($json.id) + '/relever' }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "serviceRelais001",
+          "name": "Service relaisMetier"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000
+    }
+  ],
+  "connections": {
+    "Toutes les 5 minutes": {
+      "main": [
+        [
+          {
+            "node": "GET /boites",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lancement manuel": {
+      "main": [
+        [
+          {
+            "node": "GET /boites",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET /boites": {
+      "main": [
+        [
+          {
+            "node": "POST /boites/:id/relever",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": {
+    "node:Toutes les 5 minutes": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "meta": null,
+  "nodeGroups": [],
+  "pinData": {},
+  "sourceWorkflowId": null,
+  "tags": [],
+  "versionMetadata": {
+    "name": null,
+    "description": null
+  }
+}
