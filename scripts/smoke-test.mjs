@@ -24,10 +24,14 @@ function executer(workflow) {
     ['run', '--rm', '--no-deps', 'n8n-cli', 'execute', `--id=${workflow}`, '--rawOutput'],
     { capturer: true, tolererLEchec: true },
   );
-  // La CLI écrit ses journaux avant le JSON de l'exécution : on ne garde que ce dernier.
-  const debut = sortie.search(/^\{/m);
-  if (debut === -1) echouer(`sortie de n8n execute inattendue :\n${sortie}`);
-  const execution = JSON.parse(sortie.slice(debut));
+  // La CLI mêle ses journaux au JSON de l'exécution, avant comme après selon les machines (le
+  // « task runner » s'annonce parfois à la fin). On ne garde que le bloc JSON, écrit indenté : de
+  // la première ligne qui commence par « { » à la première qui commence par « } ».
+  const lignes = sortie.split('\n');
+  const debut = lignes.findIndex((ligne) => ligne.startsWith('{'));
+  const fin = lignes.findIndex((ligne, index) => index > debut && ligne.startsWith('}'));
+  if (debut === -1 || fin === -1) echouer(`sortie de n8n execute inattendue :\n${sortie}`);
+  const execution = JSON.parse(lignes.slice(debut, fin + 1).join('\n'));
   if (execution.status !== 'success') {
     echouer(
       `le workflow ${workflow} a échoué : ${JSON.stringify(execution.data?.resultData?.error?.message)}`,
