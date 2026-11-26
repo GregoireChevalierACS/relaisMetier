@@ -78,19 +78,25 @@ Les workflows sont du code : `n8n/workflows/*.json` fait foi.
 
 ## Commandes de vérification
 
-| Commande                 | Vérifie                                                  |
-| ------------------------ | -------------------------------------------------------- |
-| `pnpm lint`              | ESLint typé strict, zéro avertissement                   |
-| `pnpm lint:architecture` | Règles de dépendance (dependency-cruiser)                |
-| `pnpm format:check`      | Formatage Prettier                                       |
-| `pnpm typecheck`         | Types de tous les paquets                                |
-| `pnpm test:coverage`     | Tests, avec 100 % de couverture exigés                   |
-| `pnpm test:mutation`     | Test de mutation du domaine (seuil 80 %)                 |
-| `pnpm build`             | Bundle du service                                        |
-| `pnpm smoke`             | Pile Docker, import des workflows, appel de `GET /sante` |
-| `pnpm generer:jeu`       | Jeu synthétique reproductible (`--graine`, `--sortie`)   |
+| Commande                 | Vérifie                                                                                        |
+| ------------------------ | ---------------------------------------------------------------------------------------------- |
+| `pnpm lint`              | ESLint typé strict, zéro avertissement                                                         |
+| `pnpm lint:architecture` | Règles de dépendance (dependency-cruiser)                                                      |
+| `pnpm format:check`      | Formatage Prettier                                                                             |
+| `pnpm typecheck`         | Types de tous les paquets                                                                      |
+| `pnpm test:coverage`     | Tests, avec 100 % de couverture exigés                                                         |
+| `pnpm test:mutation`     | Test de mutation du domaine (seuil 80 %)                                                       |
+| `pnpm build`             | Bundle du service                                                                              |
+| `pnpm smoke`             | Pile Docker, workflows importés et publiés, `GET /sante`, boîtes joignables, relevé idempotent |
+| `pnpm generer:jeu`       | Jeu synthétique reproductible (`--graine`, `--sortie`)                                         |
 
 La CI les rejoue toutes, plus `pnpm audit` et le format des commits.
+
+Les tests du journal parlent à un vrai PostgreSQL (ADR 0004). En local, lancer d'abord la base jetable, en mémoire et publiée seulement sur `127.0.0.1:5433` :
+
+```sh
+docker compose --profile tests up -d postgres-tests
+```
 
 ## Contribuer
 
