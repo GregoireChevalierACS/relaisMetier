@@ -7,9 +7,18 @@ import {
   UNE_HEURE,
   unCourriel,
 } from '@mailhelper/application/testing';
+import type { JournalDesTraitements } from './ports.js';
+import { cleDeTraitement } from '@relaismetier/domain';
 import { describe, expect, it, vi } from 'vitest';
 
-import { creerLesCasDUsageDesBoites, LIMITE_DE_VERIFICATION, type BoiteGeree } from './boites.js';
+import {
+  creerLesCasDUsageDesBoites,
+  FENETRE_DE_RELEVE_EN_HEURES,
+  LIMITE_DE_RELEVE,
+  LIMITE_DE_VERIFICATION,
+  type BoiteGeree,
+} from './boites.js';
+import { JournalEnMemoire, journalEnPanne } from './testing/index.js';
 
 const uneBoite = (surcharges: Partial<BoiteGeree> = {}): BoiteGeree => ({
   id: 'devis',
@@ -21,8 +30,17 @@ const uneBoite = (surcharges: Partial<BoiteGeree> = {}): BoiteGeree => ({
   ...surcharges,
 });
 
-function lesCasDUsage(boites: readonly BoiteGeree[], signalerUnePanne = vi.fn()) {
-  return creerLesCasDUsageDesBoites({ boites, horloge: new HorlogeFixe(), signalerUnePanne });
+function lesCasDUsage(
+  boites: readonly BoiteGeree[],
+  signalerUnePanne = vi.fn(),
+  journal: JournalDesTraitements = new JournalEnMemoire(),
+) {
+  return creerLesCasDUsageDesBoites({
+    boites,
+    journal,
+    horloge: new HorlogeFixe(),
+    signalerUnePanne,
+  });
 }
 
 describe('listerLesBoites', () => {
@@ -68,5 +86,77 @@ describe('verifierLaConnexion', () => {
       error: { kind: 'boite-injoignable' },
     });
     expect(signalerUnePanne).toHaveBeenCalledWith(new Error('réseau coupé'));
+  });
+});
+
+describe('relever', () => {
+  const unClient = unCourriel({ id: '7:1', recuLe: INSTANT_DE_REFERENCE - UNE_HEURE });
+  const uneLettre = unCourriel({
+    id: '7:2',
+    recuLe: INSTANT_DE_REFERENCE - 2 * UNE_HEURE,
+    diffusionDeMasse: true,
+  });
+
+  it('inscrit les nouveaux courriels, écartés par les règles ou à trier', async () => {
+    const journal = new JournalEnMemoire();
+    const reception = new BoiteEnMemoire([unClient, uneLettre]);
+    const cas = lesCasDUsage([uneBoite({ reception })], vi.fn(), journal);
+
+    expect(await cas.relever('devis')).toEqual({
+      ok: true,
+      value: { lus: 2, nouveaux: 2, dejaConnus: 0, sansReponse: 1, aTrier: 1, illisibles: 0 },
+    });
+    expect(await journal.lire(cleDeTraitement('devis', '7:1'))).toEqual({
+      cle: 'devis/7:1',
+      boite: 'devis',
+      idCourriel: '7:1',
+      recuLe: INSTANT_DE_REFERENCE - UNE_HEURE,
+      etat: { kind: 'a-trier' },
+    });
+    expect((await journal.lire(cleDeTraitement('devis', '7:2')))?.etat).toMatchObject({
+      kind: 'sans-reponse',
+      par: 'regle',
+    });
+  });
+
+  it('relit la fenêtre de relevé, en nombre limité', async () => {
+    const reception = new BoiteEnMemoire([]);
+    await lesCasDUsage([uneBoite({ reception })]).relever('devis');
+    expect(reception.criteres).toEqual([
+      {
+        depuis: INSTANT_DE_REFERENCE - FENETRE_DE_RELEVE_EN_HEURES * UNE_HEURE,
+        limite: LIMITE_DE_RELEVE,
+      },
+    ]);
+  });
+
+  it('ne réinscrit rien quand on relève deux fois : n8n peut réessayer sans effet', async () => {
+    const cas = lesCasDUsage([uneBoite({ reception: new BoiteEnMemoire([unClient, uneLettre]) })]);
+    await cas.relever('devis');
+    expect(await cas.relever('devis')).toEqual({
+      ok: true,
+      value: { lus: 2, nouveaux: 0, dejaConnus: 2, sansReponse: 0, aTrier: 0, illisibles: 0 },
+    });
+  });
+
+  it('compte les messages illisibles signalés par la boîte', async () => {
+    const reception = new BoiteEnMemoire([unClient], 3);
+    const resultat = await lesCasDUsage([uneBoite({ reception })]).relever('devis');
+    expect(resultat.ok && resultat.value.illisibles).toBe(3);
+  });
+
+  it('signale une boîte inconnue ou injoignable sans toucher au journal', async () => {
+    const cas = lesCasDUsage([uneBoite({ reception: boiteEnPanne() })], vi.fn(), journalEnPanne());
+    expect(await cas.relever('inconnue')).toEqual({ ok: false, error: { kind: 'boite-inconnue' } });
+    expect(await cas.relever('devis')).toEqual({ ok: false, error: { kind: 'boite-injoignable' } });
+  });
+
+  it('laisse remonter une panne du journal : ce n’est pas une panne de messagerie', async () => {
+    const cas = lesCasDUsage(
+      [uneBoite({ reception: new BoiteEnMemoire([unClient]) })],
+      vi.fn(),
+      journalEnPanne(),
+    );
+    await expect(cas.relever('devis')).rejects.toThrow('base injoignable');
   });
 });
