@@ -53,6 +53,30 @@ async function remplir(
   return statut === false ? 0 : (statut.messages ?? 0);
 }
 
+/**
+ * Connexion à la boîte, en réessayant pendant au plus 30 secondes : juste après son démarrage,
+ * GreenMail ne répond pas encore en IMAP. Il tourne sans authentification : le compte est créé à
+ * la première connexion.
+ */
+async function connecter(adresse: string): Promise<ImapFlow> {
+  for (let tentative = 1; ; tentative += 1) {
+    const client = new ImapFlow({
+      host: hote,
+      port,
+      secure: false,
+      auth: { user: adresse, pass: 'jeu' },
+      logger: false,
+    });
+    try {
+      await client.connect();
+      return client;
+    } catch (erreur) {
+      if (tentative >= 30) throw erreur;
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+    }
+  }
+}
+
 let echecs = 0;
 for (const boite of NOMS_DE_BOITES) {
   const adresse = BOITES[boite];
@@ -61,15 +85,7 @@ for (const boite of NOMS_DE_BOITES) {
   const recus = fichiersDe(manifeste.courriels);
   const envoyes = fichiersDe(manifeste.envoyes);
 
-  // GreenMail tourne sans authentification : le compte est créé à la première connexion.
-  const client = new ImapFlow({
-    host: hote,
-    port,
-    secure: false,
-    auth: { user: adresse, pass: 'jeu' },
-    logger: false,
-  });
-  await client.connect();
+  const client = await connecter(adresse);
   try {
     const dansLaReception = await remplir(client, 'INBOX', recus);
     const dansLesEnvoyes = await remplir(client, ENVOYES, envoyes);

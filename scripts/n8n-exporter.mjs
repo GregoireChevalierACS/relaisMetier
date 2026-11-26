@@ -13,6 +13,8 @@ const DOSSIER = 'n8n/workflows';
 // Champs propres à une instance : dates, versions, projet propriétaire. Ils changeraient à chaque
 // export sans que le workflow change, et le projet n'existe pas dans un n8n neuf.
 const CHAMPS_DE_L_INSTANCE = [
+  // L'activation dépend de l'instance : ce qui doit tourner est listé dans n8n/publies.json.
+  'active',
   'createdAt',
   'updatedAt',
   'versionId',
