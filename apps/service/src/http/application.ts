@@ -43,6 +43,13 @@ export function creerLApplication({
     return contexte.json({ statut: 'ok', courrielsRecents: resultat.value.courrielsRecents });
   });
 
+  // Appelé par n8n toutes les quelques minutes, et rejoué sans effet en cas de reprise.
+  application.post('/boites/:id/relever', async (contexte) => {
+    const resultat = await boites.relever(contexte.req.param('id'));
+    if (!resultat.ok) return repondreParUnProbleme(contexte, resultat.error.kind);
+    return contexte.json(resultat.value);
+  });
+
   application.notFound((contexte) => repondreParUnProbleme(contexte, 'introuvable'));
   application.onError((erreur, contexte) => {
     signalerUnePanne(erreur);

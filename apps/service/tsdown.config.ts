@@ -8,6 +8,9 @@ export default defineConfig({
   platform: 'node',
   target: 'node24',
   deps: { alwaysBundle: [/.*/] },
-  inputOptions: { resolve: { conditionNames: ['source', 'import', 'default'] } },
+  // « source » : les paquets du dépôt et des sous-modules, lus en TypeScript. Pas de condition
+  // « import » : elle ferait servir à un require() CommonJS (pg → pg-pool) la variante ESM d'un
+  // paquet, qui n'exporte pas la même chose (voir les pièges dans ROADMAP.md).
+  inputOptions: { resolve: { conditionNames: ['source', 'node', 'default'] } },
   clean: true,
 });

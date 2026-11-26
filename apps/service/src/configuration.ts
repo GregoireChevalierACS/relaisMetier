@@ -3,6 +3,7 @@ import { z } from 'zod';
 export interface Configuration {
   readonly port: number;
   readonly secretPartage: string;
+  readonly urlDeLaBase: string;
 }
 
 const LONGUEUR_MINIMALE_DU_SECRET = 32;
@@ -22,6 +23,9 @@ const schema = z.object({
       error: `doit contenir au moins ${String(LONGUEUR_MINIMALE_DU_SECRET)} caractères`,
     })
     .regex(/^[A-Za-z0-9_-]+$/, { error: 'ne doit contenir que des lettres, chiffres, - et _' }),
+  URL_DE_LA_BASE: z
+    .string({ error: 'est obligatoire' })
+    .regex(/^postgres(ql)?:\/\//, { error: 'doit être une URL postgres://' }),
 });
 
 export class ConfigurationInvalide extends Error {
@@ -42,5 +46,9 @@ export function lireLaConfiguration(
     );
     throw new ConfigurationInvalide(`Configuration invalide :\n${problemes.join('\n')}`);
   }
-  return { port: resultat.data.PORT, secretPartage: resultat.data.SECRET_PARTAGE };
+  return {
+    port: resultat.data.PORT,
+    secretPartage: resultat.data.SECRET_PARTAGE,
+    urlDeLaBase: resultat.data.URL_DE_LA_BASE,
+  };
 }
