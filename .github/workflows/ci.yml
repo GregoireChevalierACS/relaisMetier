@@ -18,6 +18,19 @@ jobs:
     name: Vérification
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    env:
+      URL_DE_LA_BASE_DE_TEST: postgres://postgres:test@127.0.0.1:5433/postgres
+    # Base jetable pour les tests du journal PostgreSQL (contrat, migrations).
+    services:
+      postgres:
+        image: postgres:18.7-alpine
+        env:
+          POSTGRES_PASSWORD: test
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 2s --health-timeout 5s
+          --health-retries 30
     steps:
       - uses: actions/checkout@v7
         with:
@@ -103,16 +116,18 @@ jobs:
       - name: Configuration de test (secrets aléatoires)
         run: pnpm env:creer
 
-      # Pile neuve : chaque workflow versionné doit s'importer dans un n8n vierge, et
-      # « Vérifier le service » doit obtenir GET /sante → 200.
-      - name: Import des workflows et smoke test
-        run: pnpm smoke
-
-      # Le chargement vérifie lui-même que chaque boîte contient le nombre attendu de courriels.
+      # Le jeu est chargé avant le smoke test : le relevé est vérifié sur de vrais courriels. Le
+      # chargement vérifie lui-même que chaque boîte contient le nombre attendu de courriels.
       - name: Chargement du jeu synthétique dans GreenMail
         run: |
+          docker compose up --detach --wait greenmail
           pnpm generer:jeu
           pnpm jeu:charger
+
+      # Pile neuve : chaque workflow versionné doit s'importer dans un n8n vierge ; « Vérifier le
+      # service » doit obtenir GET /sante → 200, et « Relever les boîtes » être idempotent.
+      - name: Import des workflows et smoke test
+        run: pnpm smoke
 
       - name: Journaux de la pile
         if: failure()
