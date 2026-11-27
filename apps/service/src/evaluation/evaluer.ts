@@ -10,10 +10,10 @@
 // Une passe réelle appelle l'API Claude et est facturée : ANTHROPIC_API_KEY doit être définie
 // (dans l'environnement ou dans .env à la racine du dépôt).
 
-import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { appendFileSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { parseArgs } from 'node:util';
+import { parseArgs, parseEnv } from 'node:util';
 
 import Anthropic from '@anthropic-ai/sdk';
 import { genererLesCasDEvaluation } from '@relaismetier/jeu-synthetique';
@@ -42,7 +42,24 @@ const lireLaSimulation = (valeur: string | undefined): Simulation | undefined =>
 };
 const simulation = lireLaSimulation(values.simulation);
 
-if (existsSync(join(RACINE, '.env'))) process.loadEnvFile(join(RACINE, '.env'));
+/**
+ * Contenu d'un fichier, ou null s'il n'existe pas. Lire puis traiter l'absence, plutôt que
+ * vérifier puis lire : entre les deux, le fichier pourrait apparaître ou disparaître.
+ */
+function lireSiPresent(chemin: string): string | null {
+  try {
+    return readFileSync(chemin, 'utf8');
+  } catch (erreur) {
+    if (erreur instanceof Error && 'code' in erreur && erreur.code === 'ENOENT') return null;
+    throw erreur;
+  }
+}
+
+const env = lireSiPresent(join(RACINE, '.env'));
+if (env !== null) {
+  // Les variables déjà définies dans l'environnement l'emportent sur .env.
+  for (const [nom, valeur] of Object.entries(parseEnv(env))) process.env[nom] ??= valeur;
+}
 const cleDApi = process.env['ANTHROPIC_API_KEY']?.trim() ?? '';
 if (simulation === undefined && cleDApi === '') {
   console.error(
@@ -65,17 +82,17 @@ const dossier =
         'reports/evaluation',
         `${new Date().toISOString().replace(/[:.]/g, '-')}-${mode}`,
       )
-    : resolve(values.reprendre);
+    : // Un chemin relatif se lit depuis le dossier où la commande a été tapée (INIT_CWD, fourni
+      // par pnpm), pas depuis apps/service où pnpm exécute le script.
+      resolve(process.env['INIT_CWD'] ?? process.cwd(), values.reprendre);
 mkdirSync(dossier, { recursive: true });
 const fichierDesResultats = join(dossier, 'resultats.jsonl');
 
 // Reprise : les cas déjà écrits ne sont ni refaits ni dupliqués.
-const dejaFaits: ResultatDUnCas[] = existsSync(fichierDesResultats)
-  ? readFileSync(fichierDesResultats, 'utf8')
-      .split('\n')
-      .filter(Boolean)
-      .map((ligne) => JSON.parse(ligne) as ResultatDUnCas) // eslint-disable-line @typescript-eslint/consistent-type-assertions -- fichier écrit par ce script, juste avant
-  : [];
+const dejaFaits: ResultatDUnCas[] = (lireSiPresent(fichierDesResultats) ?? '')
+  .split('\n')
+  .filter(Boolean)
+  .map((ligne) => JSON.parse(ligne) as ResultatDUnCas); // eslint-disable-line @typescript-eslint/consistent-type-assertions -- fichier écrit par ce script, juste avant
 const identifiantsFaits = new Set(dejaFaits.map(({ prompt_id }) => prompt_id));
 
 // Le SDK réessaie les 429 et 5xx avec une attente exponentielle aléatoire.
