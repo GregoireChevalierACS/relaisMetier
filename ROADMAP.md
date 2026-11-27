@@ -136,7 +136,7 @@ Découpée en trois étapes : **3a** relevé et idempotence, **3b** tri et réda
 - [x] Base de réponses aux questions récurrentes ([config/reponses-frequentes.md](config/reponses-frequentes.md)), placée avec la consigne de rédaction dans un préfixe mis en cache.
 - Sans clé d'API, le tri est désactivé (et le dit) au lieu de consommer des tentatives : la CI et le smoke test tournent sans coût. Le vrai tri n'a pas encore été exécuté : c'est l'objet de l'évaluation (3c).
 - [ ] Jeu d'évaluation rejoué à chaque changement de consigne ou de modèle (`pnpm evaluer`), sans jamais toucher le modèle dans les tests unitaires.
-- [ ] Workflow d'erreur n8n : une alerte par courriel à l'administrateur, au plus une par heure et par cause.
+- [x] Workflow d'erreur n8n `alerterAdmin001`, désigné par `relever-les-boites` : il transmet la panne à `POST /alertes`, et n'envoie le courriel à l'administrateur que si le service le décide. La règle « au plus une alerte par heure et par cause » est dans le domaine ; la cause ignore les détails variables (numéros, identifiants), et les occurrences retenues sont comptées dans PostgreSQL (`alertes`). Le smoke test déclenche deux fois la même panne : un courriel accepté par le serveur SMTP, puis aucun.
 
 ## Phase 4 — Mail d'accompagnement des devis
 

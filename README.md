@@ -63,6 +63,10 @@ ANTHROPIC_API_KEY=sk-ant-…
 
 Sans clé, le service relève les boîtes mais ne trie pas : `POST /boites/:id/trier` répond `"desactive": true`, et les courriels restent « à trier ». Chaque appel au modèle est facturé : le smoke test force donc toujours le tri à l'état désactivé. Les réponses aux questions fréquentes, utilisées par la rédaction, sont dans [config/reponses-frequentes.md](config/reponses-frequentes.md) ([ADR 0005](docs/adr/0005-tri-et-redaction-par-claude.md)).
 
+### Alertes
+
+Quand un workflow échoue, le workflow d'erreur « Alerter l'administrateur » écrit à `ADRESSE_DE_L_ADMINISTRATEUR`, au plus une fois par heure et par cause (le service décide, n8n envoie). Par défaut, les alertes partent par GreenMail vers une adresse fictive ; pour un vrai serveur, décommentez dans `.env` les variables `SMTP_*` de `.env.example`, puis relancez la pile : `n8n-init` réenregistre l'identifiant SMTP à chaque démarrage.
+
 **Sauvegardez `N8N_ENCRYPTION_KEY`** : sans elle, les identifiants enregistrés dans n8n sont illisibles.
 
 ## Jeu de données synthétique
