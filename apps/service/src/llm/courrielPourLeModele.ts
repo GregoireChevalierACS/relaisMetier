@@ -15,7 +15,8 @@ const enLigne = (correspondant: Correspondant): string =>
  * et glisser une consigne : toute balise courriel ou corps du texte est neutralisée.
  */
 export const neutraliserLesBalises = (texte: string): string =>
-  texte.replace(/<\/?(courriel|corps)\b/giu, (balise) => balise.replace('<', '‹'));
+  // Chaque occurrence, ouvrante ou fermante, perd son « < » au profit d'un « ‹ » inoffensif.
+  texte.replace(/<(\/?(?:courriel|corps)\b)/giu, '‹$1');
 
 /**
  * Le courriel tel que le modèle le lit : encadré dans des balises qu'il ne peut pas fermer, et

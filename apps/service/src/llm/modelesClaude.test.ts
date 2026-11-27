@@ -127,4 +127,10 @@ describe('courrielPourLeModele', () => {
     expect(texte.match(/<\/corps>/g)).toHaveLength(1);
     expect(neutraliserLesBalises('<Courriel>')).toBe('‹Courriel>');
   });
+
+  it('neutralise chaque balise, ouvrante ou fermante, et seulement celles-là', () => {
+    expect(
+      neutraliserLesBalises('<<corps></corps></COURRIEL><courriels> <b>a < b</b> <corpsx>'),
+    ).toBe('<‹corps>‹/corps>‹/COURRIEL><courriels> <b>a < b</b> <corpsx>');
+  });
 });
