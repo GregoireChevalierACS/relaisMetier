@@ -8,6 +8,7 @@ import type { Horloge } from '@mailhelper/application';
 import { creerInstant } from '@mailhelper/domain';
 import { creerLaBoiteImap, creerLeDepositaireImap, type ConnexionImap } from '@mailhelper/imap';
 import {
+  creerLesAlertes,
   creerLeTri,
   creerLesCasDUsageDesBoites,
   type BoiteGeree,
@@ -17,6 +18,7 @@ import pg from 'pg';
 
 import { ConfigurationInvalide, lireLaConfiguration, type Configuration } from './configuration.js';
 import { lireLesBoites, type ConfigurationDeBoite } from './configurationDesBoites.js';
+import { creerLeJournalDesAlertesPostgres } from './database/journalDesAlertesPostgres.js';
 import { creerLeJournalPostgres } from './database/journalPostgres.js';
 import { migrer } from './database/migrations.js';
 import { creerLApplication } from './http/application.js';
@@ -89,6 +91,11 @@ async function demarrer(): Promise<void> {
       journal,
       horloge: horlogeSysteme,
       signalerUnePanne,
+    }),
+    alertes: creerLesAlertes({
+      journal: creerLeJournalDesAlertesPostgres(pool),
+      horloge: horlogeSysteme,
+      ...configuration.alertes,
     }),
     tri: creerLeTri({
       boites,

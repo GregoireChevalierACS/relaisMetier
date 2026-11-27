@@ -13,6 +13,8 @@ export interface Configuration {
   readonly urlDeLaBase: string;
   readonly claude: ConfigurationDeClaude | null;
   readonly fichierDesReponsesFrequentes: string;
+  /** Destinataire et expéditeur des alertes envoyées quand un workflow échoue. */
+  readonly alertes: { readonly a: string; readonly de: string };
 }
 
 const LONGUEUR_MINIMALE_DU_SECRET = 32;
@@ -50,6 +52,12 @@ const schema = z.object({
     .min(1, { error: 'ne doit pas être vide' })
     .default(MODELE_DE_REDACTION_PAR_DEFAUT),
   FICHIER_DES_REPONSES_FREQUENTES: z.string().min(1).default('config/reponses-frequentes.md'),
+  ADRESSE_DE_L_ADMINISTRATEUR: z
+    .email({ error: 'doit être une adresse de courriel' })
+    .default('admin@atelier-thermique.test'),
+  EXPEDITEUR_DES_ALERTES: z
+    .email({ error: 'doit être une adresse de courriel' })
+    .default('alertes@atelier-thermique.test'),
 });
 
 export class ConfigurationInvalide extends Error {
@@ -81,5 +89,6 @@ export function lireLaConfiguration(
         ? null
         : { cleDApi, modeleDeTri: data.MODELE_DE_TRI, modeleDeRedaction: data.MODELE_DE_REDACTION },
     fichierDesReponsesFrequentes: data.FICHIER_DES_REPONSES_FREQUENTES,
+    alertes: { a: data.ADRESSE_DE_L_ADMINISTRATEUR, de: data.EXPEDITEUR_DES_ALERTES },
   };
 }

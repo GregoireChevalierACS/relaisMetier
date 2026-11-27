@@ -19,6 +19,7 @@ describe('lireLaConfiguration', () => {
       urlDeLaBase: URL,
       claude: null,
       fichierDesReponsesFrequentes: 'config/reponses-frequentes.md',
+      alertes: { a: 'admin@atelier-thermique.test', de: 'alertes@atelier-thermique.test' },
     });
   });
 
@@ -77,6 +78,11 @@ describe('lireLaConfiguration', () => {
     ['base absente', { SECRET_PARTAGE: unSecret() }, 'URL_DE_LA_BASE est obligatoire'],
     ['base autre que PostgreSQL', { ...ENV, URL_DE_LA_BASE: 'mysql://x' }, 'URL postgres://'],
     ['modèle vide', { ...ENV, MODELE_DE_TRI: '' }, 'MODELE_DE_TRI ne doit pas être vide'],
+    [
+      'administrateur sans adresse valide',
+      { ...ENV, ADRESSE_DE_L_ADMINISTRATEUR: 'admin' },
+      'ADRESSE_DE_L_ADMINISTRATEUR doit être une adresse',
+    ],
   ])('refuse un %s', (_cas, env, message) => {
     expect(() => lireLaConfiguration(env)).toThrow(ConfigurationInvalide);
     expect(() => lireLaConfiguration(env)).toThrow(message);

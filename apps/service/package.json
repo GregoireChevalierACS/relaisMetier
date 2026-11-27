@@ -6,7 +6,8 @@
   "scripts": {
     "build": "tsdown",
     "typecheck": "tsc --noEmit",
-    "start": "node dist/main.mjs"
+    "start": "node dist/main.mjs",
+    "evaluer": "tsx --conditions=source src/evaluation/evaluer.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "1.10.0",
@@ -14,6 +15,7 @@
     "@mailhelper/application": "workspace:*",
     "@mailhelper/domain": "workspace:*",
     "@mailhelper/imap": "workspace:*",
+    "@mailhelper/messagerie": "workspace:*",
     "@relaismetier/application": "workspace:*",
     "@relaismetier/domain": "workspace:*",
     "hono": "4.13.19",
@@ -21,9 +23,11 @@
     "zod": "4.6.7"
   },
   "devDependencies": {
+    "@relaismetier/jeu-synthetique": "workspace:*",
     "@types/node": "24.19.2",
     "@types/pg": "8.23.1",
     "tsdown": "0.23.7",
+    "tsx": "4.23.15",
     "vitest": "5.1.1"
   }
 }

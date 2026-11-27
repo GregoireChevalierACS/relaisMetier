@@ -4,6 +4,7 @@ import type { Context } from 'hono';
 // tests s'y fient, jamais au texte du titre.
 const CATALOGUE = {
   'non-authentifie': { status: 401, title: 'Secret partagé absent ou invalide' },
+  'requete-invalide': { status: 400, title: 'Corps de requête invalide' },
   introuvable: { status: 404, title: 'Route inconnue' },
   'boite-inconnue': { status: 404, title: 'Boîte inconnue' },
   // 502 : la panne est chez le serveur de messagerie, pas dans le service.

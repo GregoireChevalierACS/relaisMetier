@@ -26,3 +26,5 @@ export {
 } from './jeu.js';
 export type { Aide, ContratDEntretien, Devis, DevisSigne, LigneDeDevis } from './modele.js';
 export type { Personne } from './personnes.js';
+export { genererLesCasDEvaluation, type CasDEvaluation } from './evaluation.js';
+export type { Adresse } from './courriels.js';

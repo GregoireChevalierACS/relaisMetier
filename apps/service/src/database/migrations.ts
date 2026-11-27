@@ -75,6 +75,19 @@ export const MIGRATIONS: readonly Migration[] = [
         );
     `,
   },
+  {
+    numero: 3,
+    nom: 'alertes',
+    monter: `
+      CREATE TABLE alertes (
+        cause              text PRIMARY KEY,
+        -- Dernière alerte envoyée pour cette cause, ou NULL si aucune ne l'a encore été.
+        derniere_alerte_le timestamptz(3),
+        occurrences        integer NOT NULL DEFAULT 0 CHECK (occurrences >= 0)
+      );
+    `,
+    descendre: 'DROP TABLE alertes;',
+  },
 ];
 
 /** Verrou consultatif pris par chaque migration : deux services qui démarrent ne migrent pas ensemble. */

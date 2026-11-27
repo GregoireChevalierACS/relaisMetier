@@ -2,7 +2,8 @@
 // n8n, puis vérifie, à travers n8n et le service :
 // - « Vérifier le service » : GET /sante avec le secret partagé ;
 // - chaque boîte configurée est joignable en IMAP ;
-// - « Relever les boîtes » : un relevé par boîte, rejoué sans effet (idempotence).
+// - « Relever les boîtes » : un relevé par boîte, rejoué sans effet (idempotence) ;
+// - « Alerter l'administrateur » : un courriel par cause, pas de second dans l'heure.
 //
 // Usage : pnpm smoke [--arreter]
 //   --arreter : supprime les conteneurs et les volumes à la fin (CI).
@@ -119,6 +120,25 @@ if (tris.length !== boites.corps.length || tris.some(({ desactive }) => desactiv
 }
 console.log(
   `✔ Le workflow appelle le tri après chaque relevé : désactivé sans clé d'API (${String(tris.length)} boîtes).`,
+);
+
+// Workflow d'erreur : une alerte par cause et par heure. Le lancement manuel injecte un échec
+// d'exemple. Sur une base neuve, la première exécution envoie le courriel ; la seconde, jamais.
+const alerter = () => executer('alerterAdmin001');
+const premiere = alerter();
+const [decision] = premiere('POST /alertes');
+if (decision?.envoyer === true) {
+  const [envoi] = premiere("Courriel à l'administrateur");
+  if (!envoi?.accepted?.includes(decision.a)) {
+    echouer(`le courriel d'alerte n'a pas été accepté : ${JSON.stringify(envoi)}`);
+  }
+}
+const [repetee] = alerter()('POST /alertes');
+if (repetee?.envoyer !== false) {
+  echouer(`une seconde alerte de même cause dans l'heure : ${JSON.stringify(repetee)}`);
+}
+console.log(
+  `✔ Le workflow d'erreur envoie au plus une alerte par cause et par heure (${decision?.envoyer === true ? 'courriel accepté par le serveur SMTP, ' : ''}seconde alerte retenue).`,
 );
 
 if (arreter) dockerCompose(['down', '--volumes']);

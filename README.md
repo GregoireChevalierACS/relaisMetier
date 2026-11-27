@@ -63,6 +63,10 @@ ANTHROPIC_API_KEY=sk-ant-…
 
 Sans clé, le service relève les boîtes mais ne trie pas : `POST /boites/:id/trier` répond `"desactive": true`, et les courriels restent « à trier ». Chaque appel au modèle est facturé : le smoke test force donc toujours le tri à l'état désactivé. Les réponses aux questions fréquentes, utilisées par la rédaction, sont dans [config/reponses-frequentes.md](config/reponses-frequentes.md) ([ADR 0005](docs/adr/0005-tri-et-redaction-par-claude.md)).
 
+### Alertes
+
+Quand un workflow échoue, le workflow d'erreur « Alerter l'administrateur » écrit à `ADRESSE_DE_L_ADMINISTRATEUR`, au plus une fois par heure et par cause (le service décide, n8n envoie). Par défaut, les alertes partent par GreenMail vers une adresse fictive ; pour un vrai serveur, décommentez dans `.env` les variables `SMTP_*` de `.env.example`, puis relancez la pile : `n8n-init` réenregistre l'identifiant SMTP à chaque démarrage.
+
 **Sauvegardez `N8N_ENCRYPTION_KEY`** : sans elle, les identifiants enregistrés dans n8n sont illisibles.
 
 ## Jeu de données synthétique
@@ -88,17 +92,18 @@ Les workflows sont du code : `n8n/workflows/*.json` fait foi.
 
 ## Commandes de vérification
 
-| Commande                 | Vérifie                                                                                        |
-| ------------------------ | ---------------------------------------------------------------------------------------------- |
-| `pnpm lint`              | ESLint typé strict, zéro avertissement                                                         |
-| `pnpm lint:architecture` | Règles de dépendance (dependency-cruiser)                                                      |
-| `pnpm format:check`      | Formatage Prettier                                                                             |
-| `pnpm typecheck`         | Types de tous les paquets                                                                      |
-| `pnpm test:coverage`     | Tests, avec 100 % de couverture exigés                                                         |
-| `pnpm test:mutation`     | Test de mutation du domaine (seuil 80 %)                                                       |
-| `pnpm build`             | Bundle du service                                                                              |
-| `pnpm smoke`             | Pile Docker, workflows importés et publiés, `GET /sante`, boîtes joignables, relevé idempotent |
-| `pnpm generer:jeu`       | Jeu synthétique reproductible (`--graine`, `--sortie`)                                         |
+| Commande                 | Vérifie                                                                                                                                                        |
+| ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm lint`              | ESLint typé strict, zéro avertissement                                                                                                                         |
+| `pnpm lint:architecture` | Règles de dépendance (dependency-cruiser)                                                                                                                      |
+| `pnpm format:check`      | Formatage Prettier                                                                                                                                             |
+| `pnpm typecheck`         | Types de tous les paquets                                                                                                                                      |
+| `pnpm test:coverage`     | Tests, avec 100 % de couverture exigés                                                                                                                         |
+| `pnpm test:mutation`     | Test de mutation du domaine (seuil 80 %)                                                                                                                       |
+| `pnpm build`             | Bundle du service                                                                                                                                              |
+| `pnpm smoke`             | Pile Docker, workflows importés et publiés, `GET /sante`, boîtes joignables, relevé idempotent                                                                 |
+| `pnpm generer:jeu`       | Jeu synthétique reproductible (`--graine`, `--sortie`)                                                                                                         |
+| `pnpm securite`          | Analyse CodeQL `security-and-quality`, la même qu'en CI (2 min, à lancer avant de pousser ; installation : [ADR 0006](docs/adr/0006-analyse-codeql-locale.md)) |
 
 La CI les rejoue toutes, plus `pnpm audit` et le format des commits.
 

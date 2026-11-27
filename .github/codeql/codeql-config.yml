@@ -1,0 +1,14 @@
+# Configuration CodeQL commune à la CI (.github/workflows/codeql.yml) et à l'analyse locale
+# (pnpm securite) : les deux voient exactement les mêmes requêtes et les mêmes fichiers (ADR 0006).
+name: relaisMetier
+
+queries:
+  - uses: security-and-quality
+
+# Code qui n'est pas le nôtre ou qui est généré : analysé par son propre dépôt, ou sans objet.
+paths-ignore:
+  - vendor
+  - donnees-synthetiques
+  - '**/reports'
+  - '**/coverage'
+  - '**/dist'

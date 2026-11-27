@@ -19,6 +19,8 @@ export default defineConfig({
         '**/testing/**',
         '**/*.d.ts',
         'apps/service/src/main.ts',
+        // Commande d'évaluation : elle ne fait que brancher le banc, testé en simulation.
+        'apps/service/src/evaluation/evaluer.ts',
         // Commandes du jeu synthétique : vérifiées en CI en les exécutant (génération répétée,
         // chargement dans GreenMail), puisqu'elles ne font que brancher des modules testés.
         'packages/jeu-synthetique/src/cli/**',
