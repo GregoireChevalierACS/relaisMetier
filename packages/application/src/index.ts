@@ -25,3 +25,10 @@ export {
   type Modeles,
 } from './tri.js';
 export { deciderDuTri, type DecisionDuTri } from './decision.js';
+export {
+  creerLesAlertes,
+  type Alerte,
+  type CasDUsageDesAlertes,
+  type SignalementDePanne,
+} from './alertes.js';
+export type { JournalDesAlertes } from './ports.js';

@@ -43,3 +43,19 @@ export interface Trieur {
 export interface Redacteur {
   rediger(courriel: Courriel): Promise<unknown>;
 }
+
+/**
+ * Les alertes déjà envoyées, par cause : de quoi n'en envoyer qu'une par heure. Contrat vérifié par
+ * `verifierLeContratDuJournalDesAlertes`.
+ */
+export interface JournalDesAlertes {
+  /**
+   * Compte une occurrence de la cause et dit si une alerte est due (règle du domaine,
+   * `alerteDue`) ; si oui, la marque envoyée à `maintenant`. Atomique : deux pannes simultanées de
+   * même cause ne donnent qu'une alerte.
+   */
+  enregistrer(
+    cause: string,
+    maintenant: number,
+  ): Promise<{ readonly due: boolean; readonly occurrences: number }>;
+}
