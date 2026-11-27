@@ -2,7 +2,6 @@ import type { Horloge } from '@mailhelper/application';
 import {
   err,
   heuresAvant,
-  motifDeNonReponse,
   ok,
   preparerLeBrouillon,
   type Courriel,
@@ -22,7 +21,8 @@ import {
   type ProblemeDeConnexion,
 } from './boites.js';
 import type { JournalDesTraitements, Redacteur, Trieur } from './ports.js';
-import { schemaDeRedaction, schemaDeTri } from './schemasDuModele.js';
+import { deciderDuTri } from './decision.js';
+import { schemaDeRedaction } from './schemasDuModele.js';
 
 /** Les deux modèles : un petit pour trier, un plus grand pour rédiger. */
 export interface Modeles {
@@ -114,15 +114,12 @@ export function creerLeTri({
 
     let etape = 'tri';
     try {
-      const tri = schemaDeTri.safeParse(await trieur.trier(courriel));
-      if (!tri.success) return apresUnEchec(tentatives, 'réponse du tri invalide');
-
-      // Les règles de mailHelper l'emportent toujours sur le modèle.
-      const motifImpose = motifDeNonReponse(courriel);
-      if (motifImpose !== null) return { kind: 'sans-reponse', motif: motifImpose, par: 'regle' };
-      if (!tri.data.reponseAttendue) {
-        return { kind: 'sans-reponse', motif: tri.data.motif, par: 'modele' };
+      // Les règles de mailHelper l'emportent toujours sur le modèle (deciderDuTri).
+      const decision = deciderDuTri(courriel, await trieur.trier(courriel));
+      if (decision.kind === 'reponse-invalide') {
+        return apresUnEchec(tentatives, 'réponse du tri invalide');
       }
+      if (decision.kind === 'sans-reponse') return decision;
 
       etape = 'rédaction';
       const redaction = schemaDeRedaction.safeParse(await redacteur.rediger(courriel));
@@ -135,7 +132,7 @@ export function creerLeTri({
 
       etape = 'dépôt du brouillon';
       await boite.depositaire.deposer({ brouillon: brouillon.value, piecesJointes: [] });
-      return { kind: 'brouillon-depose', motif: tri.data.motif };
+      return { kind: 'brouillon-depose', motif: decision.motif };
     } catch (erreur) {
       // Modèle indisponible, refus, boîte injoignable… : retenté au prochain tri.
       signalerUnePanne(erreur);

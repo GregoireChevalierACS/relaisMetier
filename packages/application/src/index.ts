@@ -24,3 +24,4 @@ export {
   type DependancesDuTri,
   type Modeles,
 } from './tri.js';
+export { deciderDuTri, type DecisionDuTri } from './decision.js';
