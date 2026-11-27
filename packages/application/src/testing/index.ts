@@ -6,3 +6,4 @@ export {
   type FabriqueDeJournal,
 } from './contratDuJournal.js';
 export { JournalEnMemoire, journalEnPanne } from './journalEnMemoire.js';
+export { RedacteurScripte, TrieurScripte } from './modeles.js';

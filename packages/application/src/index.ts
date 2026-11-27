@@ -13,3 +13,14 @@ export {
   type ProblemeDeConnexion,
 } from './boites.js';
 export type { JournalDesTraitements } from './ports.js';
+export type { Redacteur, ReservationDeTri, Trieur } from './ports.js';
+export { schemaDeRedaction, schemaDeTri, type Redaction, type Tri } from './schemasDuModele.js';
+export {
+  creerLeTri,
+  DUREE_DE_RESERVATION_EN_MILLISECONDES,
+  LIMITE_DE_TRI,
+  type CasDUsageDuTri,
+  type CompteRenduDeTri,
+  type DependancesDuTri,
+  type Modeles,
+} from './tri.js';
