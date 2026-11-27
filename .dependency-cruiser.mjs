@@ -52,9 +52,10 @@ export default {
     },
     {
       name: 'llm-confine',
-      comment: "Seul l'adapter llm parle au modèle de langage.",
+      comment:
+        "Seul l'adapter llm parle au modèle de langage. Exception : la commande d'évaluation, qui crée le client comme main.ts.",
       severity: 'error',
-      from: { pathNot: '^apps/service/src/(llm/|main\\.ts$)' },
+      from: { pathNot: '^apps/service/src/(llm/|main\\.ts$|evaluation/evaluer\\.ts$)' },
       to: { path: 'node_modules/@anthropic-ai/', dependencyTypesNot: ['type-only'] },
     },
     {
@@ -86,8 +87,9 @@ export default {
       comment:
         'Le code livré ne doit jamais importer un fichier de test, une doublure ou le jeu synthétique.',
       severity: 'error',
-      // Le jeu synthétique est lui-même un outil de test : il s'importe librement.
-      from: { pathNot: `${TESTS}|^packages/jeu-synthetique/` },
+      // Le jeu synthétique et le banc d'évaluation sont eux-mêmes des outils de test, jamais
+      // bundlés dans le service (seul main.ts l'est) : ils l'importent librement.
+      from: { pathNot: `${TESTS}|^packages/jeu-synthetique/|^apps/service/src/evaluation/` },
       to: { path: `${TESTS}|^packages/jeu-synthetique/` },
     },
     {

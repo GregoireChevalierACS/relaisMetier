@@ -71,6 +71,9 @@ importers:
       '@mailhelper/imap':
         specifier: workspace:*
         version: link:../../vendor/mailHelper/packages/imap
+      '@mailhelper/messagerie':
+        specifier: workspace:*
+        version: link:../../vendor/mailHelper/packages/messagerie
       '@relaismetier/application':
         specifier: workspace:*
         version: link:../../packages/application
@@ -87,6 +90,9 @@ importers:
         specifier: 4.6.7
         version: 4.6.7
     devDependencies:
+      '@relaismetier/jeu-synthetique':
+        specifier: workspace:*
+        version: link:../../packages/jeu-synthetique
       '@types/node':
         specifier: 24.19.2
         version: 24.19.2
@@ -96,6 +102,9 @@ importers:
       tsdown:
         specifier: 0.23.7
         version: 0.23.7(tsx@4.23.15)(typescript@6.0.3)
+      tsx:
+        specifier: 4.23.15
+        version: 4.23.15
       vitest:
         specifier: 5.1.1
         version: 5.1.1(@opentelemetry/api@1.10.0)(@types/node@24.19.2)(@vitest/coverage-v8@5.1.1)(vite@8.3.8(@types/node@24.19.2)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))
