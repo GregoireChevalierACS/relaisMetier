@@ -37,6 +37,44 @@ export const MIGRATIONS: readonly Migration[] = [
     `,
     descendre: 'DROP TABLE traitements;',
   },
+  {
+    numero: 2,
+    nom: 'tri-des-traitements',
+    monter: `
+      ALTER TABLE traitements
+        DROP CONSTRAINT traitements_check,
+        DROP CONSTRAINT traitements_etat_check,
+        DROP CONSTRAINT traitements_par_check,
+        ADD COLUMN tentatives integer NOT NULL DEFAULT 0 CHECK (tentatives >= 0),
+        ADD COLUMN cause text,
+        -- Réservé par un tri jusqu'à cette date : un autre tri ne le prend pas avant.
+        ADD COLUMN reserve_jusqua timestamptz;
+      -- Chaque état n'a que les colonnes qui le décrivent.
+      ALTER TABLE traitements ADD CONSTRAINT traitements_etat_valide CHECK (
+        (etat = 'a-trier' AND motif IS NULL AND par IS NULL AND cause IS NULL)
+        OR (etat = 'sans-reponse' AND motif IS NOT NULL AND par IN ('regle', 'modele')
+            AND cause IS NULL AND tentatives = 0)
+        OR (etat = 'brouillon-depose' AND motif IS NOT NULL AND par IS NULL AND cause IS NULL
+            AND tentatives = 0)
+        OR (etat = 'mis-de-cote' AND cause IS NOT NULL AND motif IS NULL AND par IS NULL)
+      );
+    `,
+    // Descente possible seulement tant qu'aucun courriel n'a été trié : les nouveaux états n'ont
+    // pas d'équivalent dans le schéma précédent, et la contrainte rétablie le refuse.
+    descendre: `
+      ALTER TABLE traitements
+        DROP CONSTRAINT traitements_etat_valide,
+        DROP COLUMN reserve_jusqua,
+        DROP COLUMN cause,
+        DROP COLUMN tentatives,
+        ADD CONSTRAINT traitements_etat_check CHECK (etat IN ('a-trier', 'sans-reponse')),
+        ADD CONSTRAINT traitements_par_check CHECK (par IN ('regle')),
+        ADD CONSTRAINT traitements_check CHECK (
+          (etat = 'sans-reponse' AND motif IS NOT NULL AND par IS NOT NULL)
+          OR (etat <> 'sans-reponse' AND motif IS NULL AND par IS NULL)
+        );
+    `,
+  },
 ];
 
 /** Verrou consultatif pris par chaque migration : deux services qui démarrent ne migrent pas ensemble. */

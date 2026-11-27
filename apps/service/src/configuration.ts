@@ -1,12 +1,25 @@
 import { z } from 'zod';
 
+/** Accès à l'API Claude, ou null quand aucune clé n'est configurée (tri désactivé). */
+export interface ConfigurationDeClaude {
+  readonly cleDApi: string;
+  readonly modeleDeTri: string;
+  readonly modeleDeRedaction: string;
+}
+
 export interface Configuration {
   readonly port: number;
   readonly secretPartage: string;
   readonly urlDeLaBase: string;
+  readonly claude: ConfigurationDeClaude | null;
+  readonly fichierDesReponsesFrequentes: string;
 }
 
 const LONGUEUR_MINIMALE_DU_SECRET = 32;
+
+// Modèles choisis par la feuille de route : un petit pour trier, un plus grand pour rédiger.
+export const MODELE_DE_TRI_PAR_DEFAUT = 'claude-haiku-5-5';
+export const MODELE_DE_REDACTION_PAR_DEFAUT = 'claude-sonnet-5-5';
 
 const schema = z.object({
   PORT: z.coerce
@@ -26,6 +39,17 @@ const schema = z.object({
   URL_DE_LA_BASE: z
     .string({ error: 'est obligatoire' })
     .regex(/^postgres(ql)?:\/\//, { error: 'doit être une URL postgres://' }),
+  // Facultative : sans elle, le service relève les boîtes mais ne trie pas.
+  ANTHROPIC_API_KEY: z.string().optional(),
+  MODELE_DE_TRI: z
+    .string()
+    .min(1, { error: 'ne doit pas être vide' })
+    .default(MODELE_DE_TRI_PAR_DEFAUT),
+  MODELE_DE_REDACTION: z
+    .string()
+    .min(1, { error: 'ne doit pas être vide' })
+    .default(MODELE_DE_REDACTION_PAR_DEFAUT),
+  FICHIER_DES_REPONSES_FREQUENTES: z.string().min(1).default('config/reponses-frequentes.md'),
 });
 
 export class ConfigurationInvalide extends Error {
@@ -46,9 +70,16 @@ export function lireLaConfiguration(
     );
     throw new ConfigurationInvalide(`Configuration invalide :\n${problemes.join('\n')}`);
   }
+  const { data } = resultat;
+  const cleDApi = data.ANTHROPIC_API_KEY?.trim() ?? '';
   return {
-    port: resultat.data.PORT,
-    secretPartage: resultat.data.SECRET_PARTAGE,
-    urlDeLaBase: resultat.data.URL_DE_LA_BASE,
+    port: data.PORT,
+    secretPartage: data.SECRET_PARTAGE,
+    urlDeLaBase: data.URL_DE_LA_BASE,
+    claude:
+      cleDApi === ''
+        ? null
+        : { cleDApi, modeleDeTri: data.MODELE_DE_TRI, modeleDeRedaction: data.MODELE_DE_REDACTION },
+    fichierDesReponsesFrequentes: data.FICHIER_DES_REPONSES_FREQUENTES,
   };
 }

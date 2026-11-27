@@ -111,7 +111,7 @@ describe('relever', () => {
       boite: 'devis',
       idCourriel: '7:1',
       recuLe: INSTANT_DE_REFERENCE - UNE_HEURE,
-      etat: { kind: 'a-trier' },
+      etat: { kind: 'a-trier', tentatives: 0 },
     });
     expect((await journal.lire(cleDeTraitement('devis', '7:2')))?.etat).toMatchObject({
       kind: 'sans-reponse',

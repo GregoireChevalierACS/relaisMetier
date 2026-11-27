@@ -28,7 +28,7 @@ describe('journal PostgreSQL', () => {
     const traitement = unTraitement();
     await journal.inscrireLesNouveaux([traitement]);
     // Contourne la contrainte d'état pour simuler une ligne corrompue.
-    await pool.query('ALTER TABLE traitements DROP CONSTRAINT traitements_etat_check');
+    await pool.query('ALTER TABLE traitements DROP CONSTRAINT traitements_etat_valide');
     await pool.query("UPDATE traitements SET etat = 'inconnu'");
 
     await expect(journal.lire(traitement.cle)).rejects.toThrow(StockCorrompu);
@@ -49,5 +49,14 @@ describe('journal PostgreSQL', () => {
       unTraitement({ idCourriel: `1:${String(index)}`, cle: `devis/1:${String(index)}` }),
     );
     expect((await journal.inscrireLesNouveaux(lot)).size).toBe(200);
+  });
+});
+
+describe('journal PostgreSQL : terminer', () => {
+  it('signale un traitement inconnu comme une panne', async () => {
+    const journal = creerLeJournalPostgres((await uneBaseMigree()).pool);
+    await expect(
+      journal.terminer('devis/inconnu', { kind: 'a-trier', tentatives: 1 }),
+    ).rejects.toThrow(StockCorrompu);
   });
 });

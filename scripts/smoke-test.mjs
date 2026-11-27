@@ -12,6 +12,11 @@ import { importerEtPublier } from './n8n-publication.mjs';
 
 const arreter = process.argv.includes('--arreter');
 
+// Le smoke test ne consomme jamais d'appels payants : sa pile tourne sans clé d'API (la variable
+// du shell l'emporte sur .env), et le tri doit répondre « désactivé ». Le vrai tri est mesuré par
+// l'évaluation (pnpm evaluer), lancée sciemment.
+process.env.ANTHROPIC_API_KEY = '';
+
 function echouer(message) {
   console.error(`✖ ${message}`);
   if (arreter) dockerCompose(['down', '--volumes'], { tolererLEchec: true });
@@ -90,9 +95,9 @@ for (const { id } of boites.corps) {
 }
 
 // Deux relevés de suite : le second ne doit rien inscrire de nouveau.
-const releve = () => executer('releverBoites001')('POST /boites/:id/relever');
-const premier = releve();
-const second = releve();
+const premiereExecution = executer('releverBoites001');
+const premier = premiereExecution('POST /boites/:id/relever');
+const second = executer('releverBoites001')('POST /boites/:id/relever');
 if (premier.length !== boites.corps.length) {
   echouer(`relevé de ${String(premier.length)} boîte(s) au lieu de ${String(boites.corps.length)}`);
 }
@@ -105,6 +110,15 @@ if (relevesEnDouble.length > 0) {
 }
 console.log(
   `✔ Le workflow « Relever les boîtes » est idempotent : ${JSON.stringify(premier)}, puis ${String(second.reduce((total, { nouveaux }) => total + nouveaux, 0))} nouveau.`,
+);
+
+// Après chaque relevé, le tri est appelé pour chaque boîte, et se dit désactivé sans clé.
+const tris = premiereExecution('POST /boites/:id/trier');
+if (tris.length !== boites.corps.length || tris.some(({ desactive }) => desactive !== true)) {
+  echouer(`le tri aurait dû être appelé et désactivé pour chaque boîte : ${JSON.stringify(tris)}`);
+}
+console.log(
+  `✔ Le workflow appelle le tri après chaque relevé : désactivé sans clé d'API (${String(tris.length)} boîtes).`,
 );
 
 if (arreter) dockerCompose(['down', '--volumes']);
