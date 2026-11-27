@@ -53,6 +53,16 @@ Les boîtes partagées sont décrites dans [config/boites.json](config/boites.js
 
 Le fichier fourni décrit les trois boîtes de démonstration sur GreenMail. Chez un hébergeur réel, il faut `"port": 993`, `"securise": true` et un mot de passe d'application.
 
+### Tri et brouillons par Claude
+
+Le tri (Claude Haiku 5.5) et la rédaction des brouillons (Claude Sonnet 5.5) demandent une clé de l'API Claude. Ajoutez-la à `.env` (la ligne est commentée dans `.env.example`, pour que `pnpm env:creer` n'y mette pas une valeur aléatoire) :
+
+```sh
+ANTHROPIC_API_KEY=sk-ant-…
+```
+
+Sans clé, le service relève les boîtes mais ne trie pas : `POST /boites/:id/trier` répond `"desactive": true`, et les courriels restent « à trier ». Chaque appel au modèle est facturé : le smoke test force donc toujours le tri à l'état désactivé. Les réponses aux questions fréquentes, utilisées par la rédaction, sont dans [config/reponses-frequentes.md](config/reponses-frequentes.md) ([ADR 0005](docs/adr/0005-tri-et-redaction-par-claude.md)).
+
 **Sauvegardez `N8N_ENCRYPTION_KEY`** : sans elle, les identifiants enregistrés dans n8n sont illisibles.
 
 ## Jeu de données synthétique
