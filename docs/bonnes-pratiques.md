@@ -169,7 +169,7 @@ Ces règles sont propres à ce projet.
 - **Moindre privilège en CI** : `permissions: contents: read` par défaut.
 - **Dépendances surveillées** :
   - `pnpm audit --audit-level high` bloquant en CI ;
-  - analyse CodeQL (`security-and-quality`) à chaque PR et chaque semaine ;
+  - analyse CodeQL (`security-and-quality`) à chaque PR et chaque semaine, et **en local avant de pousser** (`pnpm securite`, même version et même configuration, [ADR 0006](adr/0006-analyse-codeql-locale.md)) ;
   - Dependabot pour les paquets, les actions GitHub et les images Docker.
 - **Quarantaine des versions** : `minimumReleaseAge` de 3 jours, et scripts d'installation bloqués sauf exception listée.
 - **Versions exactes** (`save-exact`), lockfile figé en CI (`--frozen-lockfile`), Node et pnpm épinglés (`.node-version`, `packageManager`, `engine-strict`). Images Docker épinglées par version, n8n compris.

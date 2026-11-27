@@ -88,17 +88,18 @@ Les workflows sont du code : `n8n/workflows/*.json` fait foi.
 
 ## Commandes de vérification
 
-| Commande                 | Vérifie                                                                                        |
-| ------------------------ | ---------------------------------------------------------------------------------------------- |
-| `pnpm lint`              | ESLint typé strict, zéro avertissement                                                         |
-| `pnpm lint:architecture` | Règles de dépendance (dependency-cruiser)                                                      |
-| `pnpm format:check`      | Formatage Prettier                                                                             |
-| `pnpm typecheck`         | Types de tous les paquets                                                                      |
-| `pnpm test:coverage`     | Tests, avec 100 % de couverture exigés                                                         |
-| `pnpm test:mutation`     | Test de mutation du domaine (seuil 80 %)                                                       |
-| `pnpm build`             | Bundle du service                                                                              |
-| `pnpm smoke`             | Pile Docker, workflows importés et publiés, `GET /sante`, boîtes joignables, relevé idempotent |
-| `pnpm generer:jeu`       | Jeu synthétique reproductible (`--graine`, `--sortie`)                                         |
+| Commande                 | Vérifie                                                                                                                                                        |
+| ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm lint`              | ESLint typé strict, zéro avertissement                                                                                                                         |
+| `pnpm lint:architecture` | Règles de dépendance (dependency-cruiser)                                                                                                                      |
+| `pnpm format:check`      | Formatage Prettier                                                                                                                                             |
+| `pnpm typecheck`         | Types de tous les paquets                                                                                                                                      |
+| `pnpm test:coverage`     | Tests, avec 100 % de couverture exigés                                                                                                                         |
+| `pnpm test:mutation`     | Test de mutation du domaine (seuil 80 %)                                                                                                                       |
+| `pnpm build`             | Bundle du service                                                                                                                                              |
+| `pnpm smoke`             | Pile Docker, workflows importés et publiés, `GET /sante`, boîtes joignables, relevé idempotent                                                                 |
+| `pnpm generer:jeu`       | Jeu synthétique reproductible (`--graine`, `--sortie`)                                                                                                         |
+| `pnpm securite`          | Analyse CodeQL `security-and-quality`, la même qu'en CI (2 min, à lancer avant de pousser ; installation : [ADR 0006](docs/adr/0006-analyse-codeql-locale.md)) |
 
 La CI les rejoue toutes, plus `pnpm audit` et le format des commits.
 
