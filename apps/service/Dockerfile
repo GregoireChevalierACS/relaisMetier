@@ -13,11 +13,12 @@ COPY . .
 RUN pnpm install --offline --frozen-lockfile --filter "@relaismetier/service..." \
  && pnpm --filter @relaismetier/service build
 
-# Image livrée : Node seul et un fichier JavaScript, sans dépendance ni outil de build.
+# Image livrée : Node seul et le bundle (main.mjs et les morceaux chargés à la demande par
+# import()), sans dépendance ni outil de build.
 FROM node:24.22.1-alpine
 ENV NODE_ENV=production
 WORKDIR /app
-COPY --from=construction /depot/apps/service/dist/main.mjs ./main.mjs
+COPY --from=construction /depot/apps/service/dist/ ./
 USER node
 EXPOSE 3000
 CMD ["node", "main.mjs"]

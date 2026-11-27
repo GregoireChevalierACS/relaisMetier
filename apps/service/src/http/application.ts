@@ -1,4 +1,4 @@
-import type { CasDUsageDesBoites } from '@relaismetier/application';
+import type { CasDUsageDesBoites, CasDUsageDuTri } from '@relaismetier/application';
 import { Hono } from 'hono';
 
 import { creerVerificateurDeSecret, EN_TETE_DU_SECRET } from './authentification.js';
@@ -7,6 +7,7 @@ import { repondreParUnProbleme } from './problemes.js';
 export interface DependancesHttp {
   readonly secretPartage: string;
   readonly boites: CasDUsageDesBoites;
+  readonly tri: CasDUsageDuTri;
   /** Reçoit les pannes, dont le détail n'est jamais renvoyé à l'appelant. */
   readonly signalerUnePanne: (erreur: unknown) => void;
 }
@@ -19,6 +20,7 @@ export interface DependancesHttp {
 export function creerLApplication({
   secretPartage,
   boites,
+  tri,
   signalerUnePanne,
 }: DependancesHttp): Hono {
   const secretValide = creerVerificateurDeSecret(secretPartage);
@@ -46,6 +48,13 @@ export function creerLApplication({
   // Appelé par n8n toutes les quelques minutes, et rejoué sans effet en cas de reprise.
   application.post('/boites/:id/relever', async (contexte) => {
     const resultat = await boites.relever(contexte.req.param('id'));
+    if (!resultat.ok) return repondreParUnProbleme(contexte, resultat.error.kind);
+    return contexte.json(resultat.value);
+  });
+
+  // Appelé par n8n après chaque relevé : trie les courriels réservés et dépose les brouillons.
+  application.post('/boites/:id/trier', async (contexte) => {
+    const resultat = await tri.trier(contexte.req.param('id'));
     if (!resultat.ok) return repondreParUnProbleme(contexte, resultat.error.kind);
     return contexte.json(resultat.value);
   });

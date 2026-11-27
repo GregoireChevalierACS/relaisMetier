@@ -8,11 +8,18 @@ import {
 } from '@mailhelper/application/testing';
 import type { BoiteDeReception } from '@mailhelper/application';
 import {
+  creerLeTri,
   creerLesCasDUsageDesBoites,
   type BoiteGeree,
   type JournalDesTraitements,
+  type Modeles,
 } from '@relaismetier/application';
-import { JournalEnMemoire, journalEnPanne } from '@relaismetier/application/testing';
+import {
+  JournalEnMemoire,
+  journalEnPanne,
+  RedacteurScripte,
+  TrieurScripte,
+} from '@relaismetier/application/testing';
 import { describe, expect, it, vi } from 'vitest';
 
 import { creerLApplication } from './application.js';
@@ -36,17 +43,16 @@ const uneBoite = (
 function uneApplication(
   signalerUnePanne: (erreur: unknown) => void = vi.fn(),
   journal: JournalDesTraitements = new JournalEnMemoire(),
+  modeles: Modeles | null = { trieur: new TrieurScripte(), redacteur: new RedacteurScripte() },
 ) {
-  const boites = creerLesCasDUsageDesBoites({
-    boites: [
-      uneBoite('devis', new BoiteEnMemoire([unCourriel({ recuLe: INSTANT_DE_REFERENCE })])),
-      uneBoite('accueil', boiteEnPanne()),
-    ],
-    journal,
-    horloge: new HorlogeFixe(),
-    signalerUnePanne,
-  });
-  return creerLApplication({ secretPartage: SECRET, boites, signalerUnePanne });
+  const gerees = [
+    uneBoite('devis', new BoiteEnMemoire([unCourriel({ recuLe: INSTANT_DE_REFERENCE })])),
+    uneBoite('accueil', boiteEnPanne()),
+  ];
+  const horloge = new HorlogeFixe();
+  const boites = creerLesCasDUsageDesBoites({ boites: gerees, journal, horloge, signalerUnePanne });
+  const tri = creerLeTri({ boites: gerees, journal, horloge, modeles, signalerUnePanne });
+  return creerLApplication({ secretPartage: SECRET, boites, tri, signalerUnePanne });
 }
 
 const authentifiee = (secret = SECRET): RequestInit => ({
@@ -207,6 +213,40 @@ describe('POST /boites/:id/relever', () => {
 
   it('n’accepte pas un relevé en GET', async () => {
     const reponse = await uneApplication().request('/boites/devis/relever', authentifiee());
+    expect(reponse.status).toBe(404);
+  });
+});
+
+describe('POST /boites/:id/trier', () => {
+  const poster = (application: ReturnType<typeof uneApplication>, chemin: string) =>
+    application.request(chemin, { method: 'POST', ...authentifiee() });
+
+  it('trie les courriels relevés et rend compte des brouillons déposés', async () => {
+    const application = uneApplication();
+    await poster(application, '/boites/devis/relever');
+
+    const reponse = await poster(application, '/boites/devis/trier');
+
+    expect(reponse.status).toBe(200);
+    expect(await reponse.json()).toEqual({
+      desactive: false,
+      traites: 1,
+      sansReponse: 0,
+      brouillons: 1,
+      aRetenter: 0,
+      misDeCote: 0,
+    });
+  });
+
+  it('dit que le tri est désactivé quand aucune clé d’API n’est configurée', async () => {
+    const application = uneApplication(vi.fn(), new JournalEnMemoire(), null);
+    const reponse = await poster(application, '/boites/devis/trier');
+    expect(reponse.status).toBe(200);
+    expect(await reponse.json()).toMatchObject({ desactive: true, traites: 0 });
+  });
+
+  it('répond 404 pour une boîte inconnue', async () => {
+    const reponse = await poster(uneApplication(), '/boites/inconnue/trier');
     expect(reponse.status).toBe(404);
   });
 });

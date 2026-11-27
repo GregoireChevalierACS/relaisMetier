@@ -96,6 +96,9 @@ services:
       # Base et rôle « relais », créés au premier démarrage de PostgreSQL (docker/postgres).
       URL_DE_LA_BASE: postgres://relais:${SERVICE_DB_PASSWORD:?à définir dans .env (pnpm env:creer)}@postgres:5432/relais
       FICHIER_DES_BOITES: /config/boites.json
+      # Tri et rédaction par Claude : facultatifs, désactivés sans clé (voir .env.example).
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      FICHIER_DES_REPONSES_FREQUENTES: /config/reponses-frequentes.md
       BOITE_DEVIS_MOT_DE_PASSE: ${BOITE_DEVIS_MOT_DE_PASSE:?à définir dans .env (pnpm env:creer)}
       BOITE_ACCUEIL_MOT_DE_PASSE: ${BOITE_ACCUEIL_MOT_DE_PASSE:?à définir dans .env (pnpm env:creer)}
       BOITE_COMMANDES_MOT_DE_PASSE: ${BOITE_COMMANDES_MOT_DE_PASSE:?à définir dans .env (pnpm env:creer)}

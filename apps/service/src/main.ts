@@ -2,18 +2,25 @@
 // les adapters.
 import { readFileSync } from 'node:fs';
 
+import Anthropic from '@anthropic-ai/sdk';
 import { serve } from '@hono/node-server';
 import type { Horloge } from '@mailhelper/application';
 import { creerInstant } from '@mailhelper/domain';
 import { creerLaBoiteImap, creerLeDepositaireImap, type ConnexionImap } from '@mailhelper/imap';
-import { creerLesCasDUsageDesBoites, type BoiteGeree } from '@relaismetier/application';
+import {
+  creerLeTri,
+  creerLesCasDUsageDesBoites,
+  type BoiteGeree,
+  type Modeles,
+} from '@relaismetier/application';
 import pg from 'pg';
 
-import { ConfigurationInvalide, lireLaConfiguration } from './configuration.js';
+import { ConfigurationInvalide, lireLaConfiguration, type Configuration } from './configuration.js';
 import { lireLesBoites, type ConfigurationDeBoite } from './configurationDesBoites.js';
 import { creerLeJournalPostgres } from './database/journalPostgres.js';
 import { migrer } from './database/migrations.js';
 import { creerLApplication } from './http/application.js';
+import { creerLeRedacteurClaude, creerLeTrieurClaude } from './llm/modelesClaude.js';
 
 const horlogeSysteme: Horloge = {
   maintenant() {
@@ -41,6 +48,24 @@ function versLaBoiteGeree({
   };
 }
 
+/** Les modèles Claude, ou null sans clé d'API : le service relève alors sans trier. */
+function lesModeles({ claude, fichierDesReponsesFrequentes }: Configuration): Modeles | null {
+  if (claude === null) {
+    console.log('Tri désactivé : ANTHROPIC_API_KEY absente.');
+    return null;
+  }
+  const client = new Anthropic({ apiKey: claude.cleDApi });
+  const envoyer = (parametres: Anthropic.Beta.Messages.MessageCreateParamsNonStreaming) =>
+    client.beta.messages.create(parametres);
+  return {
+    trieur: creerLeTrieurClaude(envoyer, { modele: claude.modeleDeTri }),
+    redacteur: creerLeRedacteurClaude(envoyer, {
+      modele: claude.modeleDeRedaction,
+      reponsesFrequentes: readFileSync(fichierDesReponsesFrequentes, 'utf8'),
+    }),
+  };
+}
+
 async function demarrer(): Promise<void> {
   const configuration = lireLaConfiguration(process.env);
   const configurationDesBoites = lireLesBoites(process.env, (chemin) =>
@@ -55,12 +80,21 @@ async function demarrer(): Promise<void> {
     console.error('Panne pendant le traitement d’une requête :', erreur);
   };
 
+  const boites = configurationDesBoites.map(versLaBoiteGeree);
+  const journal = creerLeJournalPostgres(pool);
   const application = creerLApplication({
     secretPartage: configuration.secretPartage,
     boites: creerLesCasDUsageDesBoites({
-      boites: configurationDesBoites.map(versLaBoiteGeree),
-      journal: creerLeJournalPostgres(pool),
+      boites,
+      journal,
       horloge: horlogeSysteme,
+      signalerUnePanne,
+    }),
+    tri: creerLeTri({
+      boites,
+      journal,
+      horloge: horlogeSysteme,
+      modeles: lesModeles(configuration),
       signalerUnePanne,
     }),
     signalerUnePanne,
