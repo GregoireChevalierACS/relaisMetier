@@ -33,7 +33,7 @@ describe('migrations', () => {
     const neuve = await base();
     expect(await migrer(neuve.pool)).toEqual(MIGRATIONS.map(({ numero }) => numero));
     expect(await migrer(neuve.pool)).toEqual([]);
-    expect(await tables(neuve)).toEqual(['migrations', 'traitements']);
+    expect(await tables(neuve)).toEqual(['alertes', 'migrations', 'traitements']);
   });
 
   it('descend chaque migration, puis la remonte', async () => {

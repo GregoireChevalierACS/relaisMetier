@@ -8,6 +8,7 @@ import {
 } from '@mailhelper/application/testing';
 import type { BoiteDeReception } from '@mailhelper/application';
 import {
+  creerLesAlertes,
   creerLeTri,
   creerLesCasDUsageDesBoites,
   type BoiteGeree,
@@ -15,6 +16,7 @@ import {
   type Modeles,
 } from '@relaismetier/application';
 import {
+  JournalDesAlertesEnMemoire,
   JournalEnMemoire,
   journalEnPanne,
   RedacteurScripte,
@@ -52,7 +54,13 @@ function uneApplication(
   const horloge = new HorlogeFixe();
   const boites = creerLesCasDUsageDesBoites({ boites: gerees, journal, horloge, signalerUnePanne });
   const tri = creerLeTri({ boites: gerees, journal, horloge, modeles, signalerUnePanne });
-  return creerLApplication({ secretPartage: SECRET, boites, tri, signalerUnePanne });
+  const alertes = creerLesAlertes({
+    journal: new JournalDesAlertesEnMemoire(),
+    horloge,
+    a: 'admin@exemple.test',
+    de: 'alertes@exemple.test',
+  });
+  return creerLApplication({ secretPartage: SECRET, boites, tri, alertes, signalerUnePanne });
 }
 
 const authentifiee = (secret = SECRET): RequestInit => ({
@@ -248,5 +256,49 @@ describe('POST /boites/:id/trier', () => {
   it('répond 404 pour une boîte inconnue', async () => {
     const reponse = await poster(uneApplication(), '/boites/inconnue/trier');
     expect(reponse.status).toBe(404);
+  });
+});
+
+describe('POST /alertes', () => {
+  const signalement = {
+    workflow: 'Relever les boîtes',
+    noeud: 'POST /boites/:id/relever',
+    message: 'Boîte injoignable',
+    execution: '128',
+    lien: null,
+  };
+  const poster = (application: ReturnType<typeof uneApplication>, corps: string) =>
+    application.request('/alertes', {
+      method: 'POST',
+      headers: { [EN_TETE_DU_SECRET]: SECRET, 'content-type': 'application/json' },
+      body: corps,
+    });
+
+  it('dit d’envoyer la première alerte, puis plus dans l’heure pour la même cause', async () => {
+    const application = uneApplication();
+
+    const premiere = await poster(application, JSON.stringify(signalement));
+    expect(premiere.status).toBe(200);
+    expect(await premiere.json()).toMatchObject({
+      envoyer: true,
+      occurrences: 1,
+      objet: '[relaisMetier] Échec du workflow « Relever les boîtes »',
+    });
+
+    const seconde = await poster(application, JSON.stringify(signalement));
+    expect(await seconde.json()).toMatchObject({ envoyer: false, occurrences: 2 });
+  });
+
+  it.each([
+    ['un corps qui n’est pas du JSON', 'pas du json'],
+    ['un champ manquant', JSON.stringify({ ...signalement, workflow: undefined })],
+    ['un champ inconnu', JSON.stringify({ ...signalement, destinataire: 'pirate@exemple.test' })],
+    ['un workflow vide', JSON.stringify({ ...signalement, workflow: '' })],
+  ])('répond 400 en Problem Details pour %s', async (_cas, corps) => {
+    const reponse = await poster(uneApplication(), corps);
+    expect(reponse.status).toBe(400);
+    expect(await reponse.json()).toMatchObject({
+      type: 'urn:relaismetier:probleme:requete-invalide',
+    });
   });
 });
