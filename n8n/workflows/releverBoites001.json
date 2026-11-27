@@ -85,6 +85,34 @@
       "retryOnFail": true,
       "maxTries": 3,
       "waitBetweenTries": 5000
+    },
+    {
+      "id": "0b7a6f3e-5c1d-4e2a-9f10-2a3b4c5d6e05",
+      "name": "POST /boites/:id/trier",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        720,
+        100
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ 'http://service:3000/boites/' + encodeURIComponent($('GET /boites').item.json.id) + '/trier' }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "timeout": 300000
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "serviceRelais001",
+          "name": "Service relaisMetier"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000
     }
   ],
   "connections": {
@@ -115,6 +143,17 @@
         [
           {
             "node": "POST /boites/:id/relever",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "POST /boites/:id/relever": {
+      "main": [
+        [
+          {
+            "node": "POST /boites/:id/trier",
             "type": "main",
             "index": 0
           }
