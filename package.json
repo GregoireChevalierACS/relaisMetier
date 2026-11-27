@@ -18,6 +18,7 @@
     "test:mutation": "pnpm --filter @relaismetier/domain test:mutation",
     "build": "pnpm --filter \"./packages/**\" --filter \"./apps/**\" build",
     "commits:check": "node scripts/verifier-commits.mjs",
+    "securite": "node scripts/securite.mjs",
     "n8n:exporter": "node scripts/n8n-exporter.mjs",
     "n8n:importer": "node scripts/n8n-importer.mjs",
     "generer:jeu": "pnpm --filter @relaismetier/jeu-synthetique generer",

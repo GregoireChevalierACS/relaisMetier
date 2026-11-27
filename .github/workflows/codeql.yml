@@ -24,6 +24,9 @@ jobs:
       - uses: github/codeql-action/init@v4
         with:
           languages: javascript-typescript
-          queries: security-and-quality
+          # Mêmes requêtes et mêmes fichiers que l'analyse locale (pnpm securite).
+          config-file: ./.github/codeql/codeql-config.yml
+          # Même version que l'analyse locale (ADR 0006) : à monter des deux côtés ensemble.
+          tools: https://github.com/github/codeql-action/releases/download/codeql-bundle-v2.27.6/codeql-bundle-linux64.tar.gz
 
       - uses: github/codeql-action/analyze@v4
