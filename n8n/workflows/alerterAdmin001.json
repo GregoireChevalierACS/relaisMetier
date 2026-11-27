@@ -1,0 +1,205 @@
+{
+  "id": "alerterAdmin001",
+  "name": "Alerter l'administrateur",
+  "description": null,
+  "isArchived": false,
+  "nodes": [
+    {
+      "id": "7c1e2a90-4b3d-4f6e-8a21-0d9c8b7a6e01",
+      "name": "Échec d'un workflow",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "7c1e2a90-4b3d-4f6e-8a21-0d9c8b7a6e02",
+      "name": "POST /alertes",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        240,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "http://service:3000/alertes",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ workflow: $json.workflow?.name ?? 'Workflow inconnu', noeud: $json.execution?.lastNodeExecuted ?? null, message: $json.execution?.error?.message ?? 'Erreur sans message', execution: $json.execution?.id == null ? null : String($json.execution.id), lien: $json.execution?.url ?? null }) }}",
+        "options": {}
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "serviceRelais001",
+          "name": "Service relaisMetier"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000
+    },
+    {
+      "id": "7c1e2a90-4b3d-4f6e-8a21-0d9c8b7a6e03",
+      "name": "Alerte due ?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        480,
+        0
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "0f4e3c21-9a8b-4c7d-b6e5-1a2b3c4d5e6f",
+              "leftValue": "={{ $json.envoyer }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "7c1e2a90-4b3d-4f6e-8a21-0d9c8b7a6e04",
+      "name": "Courriel à l'administrateur",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        720,
+        -100
+      ],
+      "parameters": {
+        "fromEmail": "={{ $json.de }}",
+        "toEmail": "={{ $json.a }}",
+        "subject": "={{ $json.objet }}",
+        "emailFormat": "text",
+        "text": "={{ $json.corps }}",
+        "options": {}
+      },
+      "credentials": {
+        "smtp": {
+          "id": "smtpAlertes00001",
+          "name": "SMTP des alertes"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000
+    },
+    {
+      "id": "7c1e2a90-4b3d-4f6e-8a21-0d9c8b7a6e05",
+      "name": "Lancement manuel",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        200
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "7c1e2a90-4b3d-4f6e-8a21-0d9c8b7a6e06",
+      "name": "Échec de test",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        240,
+        200
+      ],
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "{\"workflow\":{\"name\":\"Test des alertes\"},\"execution\":{\"id\":\"test\",\"lastNodeExecuted\":\"Lancement manuel\",\"error\":{\"message\":\"Échec de test, déclenché à la main\"},\"url\":null}}",
+        "options": {}
+      }
+    }
+  ],
+  "connections": {
+    "Échec d'un workflow": {
+      "main": [
+        [
+          {
+            "node": "POST /alertes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "POST /alertes": {
+      "main": [
+        [
+          {
+            "node": "Alerte due ?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Alerte due ?": {
+      "main": [
+        [
+          {
+            "node": "Courriel à l'administrateur",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Lancement manuel": {
+      "main": [
+        [
+          {
+            "node": "Échec de test",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Échec de test": {
+      "main": [
+        [
+          {
+            "node": "POST /alertes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": null,
+  "nodeGroups": [],
+  "pinData": {},
+  "sourceWorkflowId": null,
+  "tags": [],
+  "versionMetadata": {
+    "name": null,
+    "description": null
+  }
+}

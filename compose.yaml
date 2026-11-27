@@ -53,6 +53,12 @@ services:
     environment:
       <<: *n8n-environnement
       SECRET_PARTAGE: ${SECRET_PARTAGE:?à définir dans .env (pnpm env:creer)}
+      # Serveur qui envoie les alertes : GreenMail par défaut (voir .env.example).
+      SMTP_HOTE: ${SMTP_HOTE:-greenmail}
+      SMTP_PORT: ${SMTP_PORT:-3025}
+      SMTP_UTILISATEUR: ${SMTP_UTILISATEUR:-}
+      SMTP_MOT_DE_PASSE: ${SMTP_MOT_DE_PASSE:-}
+      SMTP_TLS: ${SMTP_TLS:-false}
     volumes:
       - n8n-donnees:/home/node/.n8n
       - ./docker/n8n:/scripts:ro
@@ -99,6 +105,9 @@ services:
       # Tri et rédaction par Claude : facultatifs, désactivés sans clé (voir .env.example).
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       FICHIER_DES_REPONSES_FREQUENTES: /config/reponses-frequentes.md
+      # Destinataire des alertes quand un workflow échoue (envoyées par n8n, via le SMTP de n8n-init).
+      ADRESSE_DE_L_ADMINISTRATEUR: ${ADRESSE_DE_L_ADMINISTRATEUR:-admin@atelier-thermique.test}
+      EXPEDITEUR_DES_ALERTES: ${EXPEDITEUR_DES_ALERTES:-alertes@atelier-thermique.test}
       BOITE_DEVIS_MOT_DE_PASSE: ${BOITE_DEVIS_MOT_DE_PASSE:?à définir dans .env (pnpm env:creer)}
       BOITE_ACCUEIL_MOT_DE_PASSE: ${BOITE_ACCUEIL_MOT_DE_PASSE:?à définir dans .env (pnpm env:creer)}
       BOITE_COMMANDES_MOT_DE_PASSE: ${BOITE_COMMANDES_MOT_DE_PASSE:?à définir dans .env (pnpm env:creer)}
